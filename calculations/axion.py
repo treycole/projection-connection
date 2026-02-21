@@ -57,7 +57,7 @@ def axion_angle_3form(
         order_fd=3,
         use_tf_speedup=True
     ):
-        r"""Compute the axion angle from the Berry curvature.
+        r"""Compute the axion angle from the Chern-Simons 3-form.
 
         The axion angle is a topological invariant in three-dimensional insulators,
         related to the magnetoelectric response. It is defined as 
@@ -118,7 +118,6 @@ def axion_angle_3form(
         If the system has a non-trivial :math:`\mathbb{Z}_2` index, there is an obstruction to choosing a smooth
         and periodic gauge choice. In this case, one must pick a set of trial wavefunctions that break time-reversal
         symmetry. 
-
         """
         mesh = Mesh(dim_k=3, axis_types=["k", "k", "k"])
         mesh.build_grid(shape=nks)
@@ -175,7 +174,6 @@ def axion_angle_3form(
         # Diagonal matrix Sigma from singular values
         eye_trial = np.eye(V.shape[-1], dtype=complex)
         Sigma = np.einsum("...i,ij->...ij", D, eye_trial)   # (..., n_trial, n_trial)
-        # print("Min singular value of S_occ:", np.min(D))
 
         U_SVD = W @ Vh  # Unitary part of SVD
         P = V @ Sigma @ Vh  # Semi-positive definite Hermitian part
@@ -247,9 +245,7 @@ def axion_angle_3form(
 
         # ------- X_mu --------
 
-        # X_mu = -1j * R_mu + V_mu @ S_con
         X_mu = S_occ.conj().swapaxes(-1,-2) @ (R_mu + 1j* V_mu @ S_con)
-
 
         # ------- A_til --------
 
@@ -270,23 +266,7 @@ def axion_angle_3form(
         # Berry connection in projection gauge
         A_til = term1 - term2
 
-        # term = Vh @ S_occ.conj().swapaxes(-1,-2) @ X_mu @ Vh.conj().swapaxes(-1,-2)
-        # term +=  term.conj().swapaxes(-1,-2)  # h.c.
-
-        # for a in range(term.shape[-2]):
-        #     for b in range(term.shape[-1]):
-        #         term[..., a, b] *= (1 / (D[..., a] + D[..., b]))
-
-        # # Berry connection in projection gauge
-        # A_til = 1j * (
-        #     U_SVD.conj().swapaxes(-1,-2) @ X_mu
-        #     -  Vh.conj().swapaxes(-1,-2) @ term @ Vh
-        # ) @ np.linalg.inv(P)
-
         print("Min singular value of S_occ:", np.min(D))
-        # print("Min eigenvalue of S_occ^dagger S_occ:", np.min(evals))
-        # print("Max deviation of A_til from Hermiticity:", np.max(np.abs(A_til - A_til.conj().swapaxes(-1,-2))))
-
         assert np.allclose(A_til, A_til.conj().swapaxes(-1,-2)), "A_til is not Hermitian!"
 
         # CS Axion angle
