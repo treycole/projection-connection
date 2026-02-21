@@ -1,6 +1,6 @@
-# Chern-Simons axion angle in the projection gauge
+# Exact expression for the Berry connection in the projection gauge
 
-Code for the paper "Chern-Simons axion angle in the projection gauge" by Trey Cole and David Vanderbilt. 
+Code for the paper "Exact expression for the Berry connection in the projection gauge" by Trey Cole and David Vanderbilt. 
 
 ## 💻 Results 
 
@@ -20,3 +20,4 @@ This work is licensed under a
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
 [cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
+
