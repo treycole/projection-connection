@@ -1,4 +1,91 @@
-\include{preamble}
+\def\draftversion{false}
+\RequirePackage{ifthen}
+\ifthenelse{\equal{\draftversion}{true}}{
+  \documentclass[galley,aps,pra,10pt,amsmath,amssymb,
+    superscriptaddress,nofootinbib,longbibliography]{revtex4-2}
+}{
+  \documentclass[twocolumn,aps,pra,10pt,amsmath,amssymb,
+    superscriptaddress,nofootinbib,longbibliography]{revtex4-2}
+}
+\usepackage{graphicx}% Include figure files
+\usepackage[usenames,dvipsnames]{color} % colors
+\usepackage{bm} % bold math
+\usepackage{soul} % \st    for strike-out
+\usepackage{mathtools}
+\usepackage{tabularx}
+\usepackage{dcolumn}
+\usepackage{bbold}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,       
+    linkcolor=blue,          
+    citecolor=blue,       
+    filecolor=magenta,      
+    urlcolor=blue          
+}
+
+\def\Red#1{\textcolor{red}{#1}}
+\def\Blue#1{\textcolor{blue}{#1}}
+\def\Green#1{\textcolor{OliveGreen}{#1}}
+\def\Magenta#1{\textcolor{magenta}{#1}}
+
+\def\scr{\scriptsize}
+\ifthenelse{\equal{\draftversion}{true}}{
+  \marginparwidth 2.7in
+  \marginparsep 0.5in
+  \newcounter{comm} 
+  \def\commnext{\stepcounter{comm}}
+  \def\commtext{{\bf\color{blue}[\arabic{comm}]}}
+  \def\commmar{{\bf\color{blue}[\arabic{comm}]}}
+  \def\dvm#1{\commnext\marginpar{\small DV\commmar: #1}\commtext}
+  \def\tcm#1{\commnext\marginpar{\small TC\commmar: #1}\commtext}
+  \def\tnewpage{\newpage\marginpar{\small Temporary newpage}}
+  \newcommand{\seclab}[1]{\label{sec:#1}{\Red{\small\;\;[sec:~#1]}}}
+  \newcommand{\eqlab}[1]{\Red{\hbox{\small\;\;[#1]}}\label{eq:#1}}
+  \newcommand{\figlab}[1]{\Red{\hbox{\small\;\;[fig:~#1]}}\label{fig:#1}}
+}{
+  \def\dvm#1{}
+  \def\tcm#1{}
+  \def\tnewpage{}
+  \newcommand{\eqlab}[1]{\label{eq:#1}}
+  \newcommand{\seclab}[1]{\label{sec:#1}}
+  \newcommand{\figlab}[1]{\label{fig:#1}}
+}
+
+\newcommand{\beq}{\begin{equation}}
+\newcommand{\eeq}{\end{equation}}
+\newcommand{\bea}{\begin{eqnarray}}
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\nn}{\nonumber\\}
+\newcommand{\eq}[1]{Eq.~(\ref{eq:#1})}
+\newcommand{\Eq}[1]{Equation~(\ref{eq:#1})}
+\newcommand{\eqs}[2]{Eqs.~(\ref{eq:#1}) and (\ref{eq:#2})}
+\newcommand{\Eqs}[2]{Equations~(\ref{eq:#1}) and (\ref{eq:#2})}
+\newcommand{\eqo}[2]{Eq.~(\ref{eq:#1}) or (\ref{eq:#2})}
+\newcommand{\eqr}[2]{Eqs.~(\ref{eq:#1}-\ref{eq:#2})}
+\newcommand{\Eqr}[2]{Equations~(\ref{eq:#1}-\ref{eq:#2})}
+\newcommand{\fref}[1]{Fig.~\ref{fig:#1}}
+\newcommand{\Fref}[1]{Figure~\ref{fig:#1}}
+\newcommand{\frefs}[2]{Figs.~\ref{fig:#1} and \ref{fig:#2}}
+\newcommand{\frefo}[2]{Figs.~\ref{fig:#1} or \ref{fig:#2}}
+\newcommand{\sref}[1]{Sec.~\ref{sec:#1}}
+\newcommand{\srefs}[2]{Secs.~\ref{sec:#1} and \ref{sec:#2}} 
+\newcommand{\Sref}[1]{Section~\ref{sec:#1}}
+\newcommand{\aref}[1]{Appendix~\ref{sec:#1}}
+\newcommand{\ket}[1]{\vert#1\rangle}
+\newcommand{\bra}[1]{\langle#1\vert}
+\newcommand{\ip}[2]{\langle#1\vert#2\rangle}
+\newcommand{\me}[3]{\langle#1\vert#2\vert#3\rangle}
+\newcommand{\ev}[1]{\langle#1\rangle}
+\newcommand{\wt}[1]{\widetilde{#1}}
+\newcommand{\Tr}{\mathrm{Tr}\,}   
+\newcommand{\code}[1]{\textsc{#1}}  
+\renewcommand{\Re}{\mathrm{Re}\,}
+\renewcommand{\Im}{\mathrm{Im}\,}
+
+\newcommand{\parkmu}{ \partial_{k_\mu} }
+\newcommand{\parmu}{ \partial_{\mu} }
+
 \begin{document}
 
 \title{ 
@@ -15,7 +102,7 @@ Piscataway, New Jersey 08854, USA}
 Department of Physics \& Astronomy, Rutgers University,
 Piscataway, New Jersey 08854, USA}
 \begin{abstract}
-The Berry connection encodes the momentum-space geometry of occupied Bloch states in gapped insulators and plays a central role in topological materials. While gauge-invariant quantities can be evaluated directly from overlap matrices between neighboring $k$ points in an arbitrary gauge, accessing the Berry connection itself as a continuously differentiable field requires specifying a smooth gauge over the Brillouin zone. In practical Wannier-based implementations, the Berry connection is typically obtained using finite-difference formulas involving neighboring-$k$ overlaps. Such constructions are intrinsically approximate and can become numerically sensitive in the presence of small band gaps or when evaluating higher-order response functions that depend explicitly on the connection, such as the Chern--Simons axion angle. In this work, we derive an exact expression for the non-Abelian Berry connection in the projection gauge that is local in crystal momentum. Starting from projected and orthonormalized Bloch-like states, we obtain a closed-form equation expressed entirely in terms of quantities evaluated at a single crystal momentum. We validate this formulation in one and three dimensions by computing the Berry phase and Chern--Simons axion angle in a tight-binding setting. 
+The Berry connection encodes the momentum-space geometry of occupied Bloch states in gapped insulators and plays a central role in topological materials. While gauge-invariant quantities can be evaluated directly from overlap matrices between neighboring $k$ points in an arbitrary gauge, accessing the Berry connection itself as a continuously differentiable field requires specifying a smooth gauge over the Brillouin zone. In practical Wannier-based implementations, the Berry connection is typically computed using finite-difference formulas that involve overlaps between neighboring $ k$ points. Such constructions are intrinsically approximate and can become numerically sensitive in the presence of small band gaps or when evaluating higher-order response functions that depend explicitly on the connection, such as the Chern--Simons axion angle. In this work, we derive an exact expression for the non-Abelian Berry connection in the projection gauge that is local in crystal momentum. Starting from projected and orthonormalized Bloch-like states, we obtain a closed-form equation expressed entirely in terms of quantities evaluated at a single crystal momentum. We validate this formulation in one and three dimensions by computing the Berry phase and Chern--Simons axion angle in a tight-binding setting. 
 \end{abstract}
 
 \maketitle
@@ -41,11 +128,11 @@ Evaluating $\mathcal{A}_\mu$ itself requires specifying a smooth and continuous 
     U^\dagger \mathcal{A}_\mu U
     + i U^\dagger \partial_{\mu} U .
 \end{equation}
-For any initially discontinuous gauge, the unitary that smoothens the gauge will also itself be discontinous, making $\partial_{\mu} U$ ill-defined. 
+For any initially discontinuous gauge, the unitary that smoothens the gauge will also itself be discontinuous, making $\partial_{\mu} U$ ill-defined. 
 
 Wannier-based workflows provide a practical solution by constructing a smooth gauge through projection onto localized trial orbitals, optionally followed by disentanglement and maximal localization \cite{marzari1997, souza2001, marzari2012}. The resulting \emph{projection (or Wannier) gauge} enables stable evaluation of geometric quantities. In this setting, the projection-gauge Berry connection encodes the off-diagonal position matrix elements in the Wannier basis \cite{xiao2010, Vanderbilt_2018}. These terms represent what is often referred to as the ``external" contributions to the band geometry, in contrast to the ``internal" contributions that are captured by the tight-binding eigenvectors. These external terms are needed, for example, when computing electric-dipole transition moments for the interband optical conductivity \cite{yates2007}, and Wannier-interpolating the Berry curvature \cite{wang2006}. 
 
-However, in standard Wannier codes, such as \textsc{Wannier90} \cite{MOSTOFI20142309}, the projection-gauge Berry connection is not computed analytically; instead it is approximated by finite-difference overlaps between the first-principles Bloch eigenstates at neighboring $k$-points \cite{marazzo2024, marzari1997}. Higher-order generalizations of this finite-difference scheme for computing $\tilde{A}_\mu$ have recently been introduced \cite{cistaro2023}. While robust and widely used, these constructions discretize momentum derivatives at the outset and introduce truncation errors tied to $k$-mesh spacing and gauge alignment. 
+However, in standard Wannier codes, such as \textsc{Wannier90} \cite{MOSTOFI20142309}, the projection-gauge Berry connection is not computed analytically; instead, it is approximated by finite-difference overlaps between the first-principles Bloch eigenstates at neighboring $k$-points \cite{marazzo2024, marzari1997}. Higher-order generalizations of this finite-difference scheme for computing $\tilde{A}_\mu$ have recently been introduced \cite{cistaro2023}. While robust and widely used, these constructions discretize momentum derivatives at the outset and introduce truncation errors tied to $k$-mesh spacing and gauge alignment. 
 
 In this work, we derive an explicit closed-form expression for the non-Abelian Berry connection directly in the simple projection gauge (i.e., obtained as in the usual Wannierization procedure but without maximal localization) without recourse to finite differences or neighboring-$k$ overlaps. Starting from the projected and orthonormalized Bloch-like states produced by the projection method, we obtain a single-point, Kubo-like formula for $\tilde{A}_\mu(\mathbf{k})$ expressed entirely in terms of overlap matrices, position matrix elements of the trial orbitals, and interband velocity matrix elements. The connection is thus determined exactly at each $k$ from local information in momentum space. 
 
@@ -188,7 +275,7 @@ We next obtain $\partial_\mu \mathcal{O}^{1/2}$ in closed form. Differentiating 
 \end{equation}
 which is a Sylvester equation of the standard form $MX + XM = Y$ for the unknown $X=\partial_\mu \mathcal{O}^{1/2}$, with $M=\mathcal{O}^{1/2}$ and $Y=\partial_\mu \mathcal{O}$. 
 
-Consider the Sylvester map $\mathcal{L}_M:\,X\mapsto MX+XM$ for a Hermitian positive semidefinite matrix $M$. If $M$ is positive definite, $\mathcal{L}_M$ is invertible on the full matrix space. More generally, when $M$ has a nontrivial kernel, $\mathcal{L}_M$ remains invertible on the subspace of matrices with no components in $\ker{M} \otimes \ker{M}$. On this subspace the Sylvester equation admits a unique solution, which we denote $X=\mathcal{L}_M^{-1}[Y]$. 
+Consider the Sylvester map $\mathcal{L}_M:\,X\mapsto MX+XM$ for a Hermitian positive semidefinite matrix $M$. If $M$ is positive definite, $\mathcal{L}_M$ is invertible on the full matrix space. More generally, when $M$ has a nontrivial kernel, $\mathcal{L}_M$ remains invertible on the subspace of matrices with no components in $\ker{M} \otimes \ker{M}$. On this subspace, the Sylvester equation admits a unique solution, which we denote $X=\mathcal{L}_M^{-1}[Y]$. 
 
 With this notation, the formal solution to \eq{sylvester_P} reads
 \begin{equation}
@@ -213,11 +300,11 @@ V_{mi}\left[
 \frac{(V^\dagger (\partial_\mu \mathcal{O}) V)_{ij}}{\sigma_i+\sigma_j}
 \right]V^\dagger_{jn} ,
 \end{equation}
-where the division is understood to be elementwise inside the brackets and outside the brackets repeated indices are implicitly summed over.
+where the division is understood to be elementwise inside the brackets, and outside the brackets, repeated indices are implicitly summed over.
 
 Because $\sigma_i \ge 0$, the only potentially vanishing denominators satisfy $\sigma_i+\sigma_j=0$, which implies $\sigma_i=\sigma_j=0$. Therefore, $\mathcal{L}_{\mathcal{O}^{1/2}}^{-1}$ is well defined provided that $\partial_\mu \mathcal{O}$ has no components in the null--null block $\ker(\mathcal{O}^{1/2}) \otimes \ker(\mathcal{O}^{1/2})$. If $\mathcal{O}^{1/2}$ is strictly positive definite (all $\sigma_i>0$), $\mathcal{L}_{\mathcal{O}^{1/2}}$ is invertible on the full matrix space.
 
-In practice, very small $\sigma_i$ correspond to trial-orbitals with weak support on the occupied subspace, leading to an ill-conditioned projection and numerical instability in \eq{syl_sol}. This can be mitigated by improving the choice of trial orbitals or, when appropriate, restricting to the well-conditioned subspace. If the projection loses rank---for example due to a topological obstruction---some $\sigma_i$ vanish at certain $k$, signaling that a globally smooth projection gauge cannot be constructed. 
+In practice, very small $\sigma_i$ correspond to trial-orbitals with weak support on the occupied subspace, leading to an ill-conditioned projection and numerical instability in \eq{syl_sol}. This can be mitigated by improving the choice of trial orbitals or, when appropriate, restricting to the well-conditioned subspace. If the projection loses rank---for example, due to a topological obstruction---some $\sigma_i$ vanish at certain $k$, signaling that a globally smooth projection gauge cannot be constructed. 
 
 The remaining ingredient is the derivative of the overlap matrix $\mathcal{O}_{mn}=\langle\phi_m|\phi_n\rangle$. By direct differentiation,
 \begin{equation}
@@ -354,7 +441,7 @@ a fully local construction of the projection-gauge connection $\tilde{\mathcal{A
 
 Equation \eqref{eq:tildeA_final} completes the construction of the projection-gauge Berry connection in terms of single-$k$ quantities. All dependence on derivatives of Bloch eigenstates has been eliminated in favor of the overlap matrices between Bloch eigenstates and trial orbitals, position matrix elements involving the trial orbitals, and a Kubo-like interband term that depends only on the occupied and empty projectors. This expression is exact at a given $k$ and---as long as the occupied subspace is smooth and the projection is well-conditioned---yields a well-defined and numerically stable non-Abelian connection without recourse to finite-difference schemes or overlaps between neighboring $k$ points.
 
-Below we test the applicability of the analytic expression for $\tilde{A}_\mu$ in a tight-binding setting for simplicity and clarity. Although the derivation is completely general and applies equally to first-principles Bloch states, tight-binding models allow our expression to be compared against standard finite-difference constructions without additional complications. In this setting, we form the projection gauge by projecting the tight-binding energy eigenstates onto a set of trial orbitals constructed as linear combinations of the tight-binding basis orbitals. We then compute the Berry connection in this gauge via Eq.~\ref{eq:tildeA_final}. In a first principles setting, this same projection-gauge Berry connection would represent the ``external" contribution if computed from the projection matrices given by \textsc{Wannier90}, for example. 
+Below, we test the applicability of the analytic expression for $\tilde{A}_\mu$ in a tight-binding setting for simplicity and clarity. Although the derivation is completely general and applies equally to first-principles Bloch states, tight-binding models allow our expression to be compared against standard finite-difference constructions without additional complications. In this setting, we form the projection gauge by projecting the tight-binding energy eigenstates onto a set of trial orbitals constructed as linear combinations of the tight-binding basis orbitals. We then compute the Berry connection in this gauge via Eq.~\ref{eq:tildeA_final}. In a first principles setting, this same projection-gauge Berry connection would represent the ``external" contribution if computed from the projection matrices given by \textsc{Wannier90}, for example. 
 
 All tight-binding calculations are performed using \textsc{PythTB} \cite{Cole_Python_Tight_Binding_2025}, which provides tools for constructing tight-binding models, generating smooth projection gauges, and evaluating Berry phases and related geometric quantities.
 
@@ -385,7 +472,7 @@ which describes the parallel transport of the occupied subspace between neighbor
     \label{eq:discrete_connection}
     \mathrm{Tr}[\mathcal{A}^{\mathrm{FD}}(k_j)] = \frac{-1}{\delta k} \,\mathrm{Im} \, \log \text{det} M(k_j, k_{j+1})
 \end{equation}
-where $\delta k  = k_{j+1} - k_j$ and the branch of the logarithm is chosen continuously along the path in $k$. For a single occupied band this reduces to the familiar Abelian expression, while for multiple occupied bands the determinant extracts the $U(1)$ part of the non-Abelian connection. 
+where $\delta k  = k_{j+1} - k_j$ and the branch of the logarithm is chosen continuously along the path in $k$. For a single occupied band, this reduces to the familiar Abelian expression, while for multiple occupied bands, the determinant extracts the $U(1)$ part of the non-Abelian connection. 
 
 The discrete Wilson loop (holonomy) associated with a closed traversal of the Brillouin zone is then defined as the ordered product
 \begin{equation}
@@ -423,7 +510,7 @@ The model has inversion symmetry, which constrains the occupied-band Berry phase
 
 \begin{figure}[t!]
 \begin{center}
-\includegraphics[width=3.4in]{paper/ssh_berry_conn.png}
+\includegraphics[width=3.4in]{ssh_berry_conn.png}
 \end{center}
 % \centering
 \vspace{-7.5mm}
@@ -436,7 +523,14 @@ Berry connection in the projection gauge as a function of crystal momentum (redu
 
 Figure \ref{fig:3} shows the Berry connection in the projection gauge as a function of crystal momentum. The solid black curve corresponds to the single-point formulation developed here, which yields the exact Berry connection at each sampled $k$-point. The dashed curves show the discrete Berry connection extracted from overlap-based Wilson loops using \eq{discrete_connection}, evaluated in the same projection gauge. As the mesh density increases, the Wilson-loop connection converges uniformly to the single-point result. 
 
-When the Berry phase is computed using overlap-based Wilson loops, convergence is rapid even on relatively coarse $k$-meshes. By contrast, evaluating the phase via numerical integration of the projection-gauge Berry connection exhibits slower convergence, particularly when the band gap is small. In this regime the Berry connection develops a narrow peak in $k$, and a coarse mesh may not adequately resolve its structure, leading to quadrature error in the discrete integral. The convergence behavior of the two approaches is summarized in Table~\ref{tab:phases}.
+
+When the Berry phase is computed using overlap-based Wilson loops, convergence is rapid even on relatively coarse $k$-meshes. By contrast, evaluating the phase via numerical integration of the projection-gauge Berry connection exhibits slower convergence, particularly when the band gap is small. In this regime, the Berry connection develops a narrow peak in $k$, and a coarse mesh may not adequately resolve its structure, leading to quadrature error in the discrete integral. The convergence behavior of the two approaches is summarized in Table~\ref{tab:phases}.
+
+This difference arises from the nature of the numerical integration rather than from any deficiency of the single-point construction. The Wilson-loop formulation discretizes parallel transport at the level of the holonomy, thereby capturing the accumulated geometric phase over each mesh segment. For the Berry phase, this is sufficient, since it depends only on the band-traced component of the connection and can therefore be expressed entirely in terms of the determinant of a product of overlap matrices.
+
+The single-point approach instead provides the local Berry connection itself, whose integral must be approximated using standard quadrature. While this introduces mesh-dependent integration error, it provides direct access to the full connection matrix at each $k$-point. The advantage of local access to $\tilde{\mathcal{A}}_\mu$ becomes apparent in higher-dimensional settings, as in Sec.~\ref{sec:FKM}, where quantities of interest depend explicitly on the non-Abelian structure of the Berry connection, and where no simple gauge-covariant discretization is known that can reduce the problem to a product of overlaps. 
+
+
 
 \newcommand\Tstrut{\rule{0pt}{2.9ex}}  % "top" strut
 \newcommand\Bstrut{\rule[-1.2ex]{0pt}{0pt}} % "bottom" strut
@@ -456,9 +550,6 @@ When the Berry phase is computed using overlap-based Wilson loops, convergence i
     \label{tab:phases}
 \end{table}
 
-This difference arises from the nature of the numerical integration rather than from any deficiency of the single-point construction. The Wilson-loop formulation discretizes parallel transport at the level of the holonomy, thereby capturing the accumulated geometric phase over each mesh segment. For the Berry phase this is sufficient, since it depends only on the band-traced component of the connection and can therefore be expressed entirely in terms of the determinant of a product of overlap matrices.
-
-The single-point approach instead provides the local Berry connection itself, whose integral must be approximated using standard quadrature. While this introduces mesh-dependent integration error, it yields direct access to the full connection matrix at each $k$ point. The advantage of local access to $\tilde{\mathcal{A}}_\mu$ becomes apparent in higher-dimensional settings, as in Sec.~\ref{sec:FKM}, where quantities of interest depend explicitly on the non-Abelian structure of the Berry connection, and where no simple gauge-covariant discretization is known that can reduce the problem to a product of overlaps. 
 
 \section{Axion angle in the projection gauge}
 \label{sec:FKM}
@@ -478,12 +569,12 @@ Because the Chern--Simons integrand is not gauge-covariant, the integral in \eqs
 
 However, the direct numerical evaluation of $\theta$ is nontrivial. The difficulty stems from the fact that---unlike the one-dimensional Berry phase---no fully gauge-invariant discretized expression for the Chern--Simons 3-form exists in terms of products of overlap matrices, except in the single-band case \cite{coh2011chern}. As a result, the construction of a smooth, periodic gauge and the direct evaluation of $\mathcal A_\mu$ become unavoidable prerequisites for computing $\theta$. The problem of constructing a smooth, periodic gauge is closely related to that of constructing well-localized Wannier functions. Accordingly, several approaches based on Wannier and hybrid Wannier representations have been developed to compute the Chern--Simons axion angle \cite{coh2011chern, olsen2017surface, varnava2020axion}. 
 
-Here, we take a complementary approach. We combine the single-$k$ expression for the projection-gauge connection $\tilde{\mathcal{A}}_\mu(\mathbf{k}, \beta)$ derived in Sec.~\ref{sec:conn} with the Chern--Simons 3-form to compute the axion angle along an adiabatic cycle in the Fu--Kane--Mele (FKM) model. Once the projection gauge is fixed, $\tilde{\mathcal{A}}_\mu$ can be obtained directly at each $(\mathbf{k}, \beta)$ as a single-point quantity, without finite differences or overlap matrices between neighboring $k$ points. This eliminates branch-sensitive matrix logarithms and reduces sensitivity to gauge discontinuities, making it practical to evaluate the Chern-–Simons integral directly. We will compare our method against the standard finite-difference approach and against a gauge-invariant formulation for \emph{changes} in $\theta$ along a cycle based on the 4-curvature.
+Here, we take a complementary approach. We combine the single-$k$ expression for the projection-gauge connection $\tilde{\mathcal{A}}_\mu(\mathbf{k}, \beta)$ derived in Sec.~\ref{sec:conn} with the Chern--Simons 3-form to compute the axion angle along an adiabatic cycle in the Fu--Kane--Mele (FKM) model. Once the projection gauge is fixed, $\tilde{\mathcal{A}}_\mu$ can be obtained directly at each $(\mathbf{k}, \beta)$ as a single-point quantity, without finite differences or overlap matrices between neighboring $k$ points. This eliminates branch-sensitive matrix logarithms and reduces sensitivity to gauge discontinuities, making it practical to evaluate the Chern--Simons integral directly. We will compare our method against the standard finite-difference approach and against a gauge-invariant formulation for \emph{changes} in $\theta$ along a cycle based on the 4-curvature.
 
 
 \subsection{Model and adiabatic cycle}
 
-The FKM model is a tight-binding model on a diamond lattice with spin-orbit coupling that realizes a three-dimensional topological insulator with time-reversal ($\mathcal{T}$) and inversion ($\mathcal{P}$) symmetries. Each of these symmetries, in combination with the model's nontrivial topological nature, quantize the axion angle to $\theta=\pi$. 
+The FKM model is a tight-binding model on a diamond lattice with spin-orbit coupling that realizes a three-dimensional topological insulator with time-reversal ($\mathcal{T}$) and inversion ($\mathcal{P}$) symmetries. Each of these symmetries, in combination with the model's nontrivial topological nature, quantizes the axion angle to $\theta=\pi$. 
 
 To break the symmetries that quantize $\theta$, we follow Ref.~\cite{essin2010orbital} by introducing an adiabatic parameter $\beta$ that enters the Hamiltonian through both a staggered Zeeman field and a modulation of the nearest-neighbor hopping amplitudes along the $[111]$ direction. The model Hamiltonian, written in second-quantized form, is 
 \begin{align}
@@ -550,7 +641,7 @@ The agreement with the gauge-invariant four-curvature result is excellent over t
 
 \begin{figure}[t!]
 \begin{center}
-\includegraphics[width=3.4in]{paper/fkm_axion_angle_comparison.png}
+\includegraphics[width=3.4in]{fkm_axion_angle_comparison.png}
 \end{center}
 % \centering
 \vspace{-7.5mm}
@@ -584,7 +675,7 @@ This behavior reflects the fact that the finite-difference approach discretizes 
 
 \begin{figure}[t!]
 \begin{center}
-\includegraphics[width=3.4in]{paper/fkm_axion_angle_convergence.png}
+\includegraphics[width=3.4in]{fkm_axion_angle_convergence.png}
 \end{center}
 % \centering
 \vspace{-7.5mm}
@@ -600,11 +691,11 @@ Figure~\ref{fig:2} illustrates the convergence of $\theta(\beta=\pi)$ toward its
 
 \section{Discussion}
 
-We have derived an exact, fixed-$k$ Kubo-like expression for the non-Abelian Berry connection in the Wannier gauge and applied it to both one- and three-dimensional test cases. By replacing finite-difference derivatives with a strictly local-$k$ formulation, the method removes errors associated with the discretized momentum derivatives and branch-sensitive matrix logarithms. In one dimension, the SSH model provides a controlled benchmark: in the fine-mesh limit, the derived $\tilde{\mathcal{A}}$ reproduces the quantized Berry phase and agrees with the standard parallel-transport construction. On coarse meshes, parallel-transport remains more robust for evaluating the Berry phase, reflecting the special role of gauge-invariant holonomy in one dimension. 
+We have derived an exact, fixed-$k$ Kubo-like expression for the non-Abelian Berry connection in the Wannier gauge and applied it to both one- and three-dimensional test cases. By replacing finite-difference derivatives with a strictly local-$k$ formulation, the method removes errors associated with the discretized momentum derivatives and branch-sensitive matrix logarithms. In one dimension, the SSH model provides a controlled benchmark: in the fine-mesh limit, the derived $\tilde{\mathcal{A}}$ reproduces the quantized Berry phase and agrees with the standard parallel-transport construction. On coarse meshes, parallel transport remains more robust for evaluating the Berry phase, reflecting the special role of gauge-invariant holonomy in one dimension. 
 
-In higher dimensions, however, no analogous gauge-invariant discretization exists for geometric quantities that depend explicitly on the Berry connection itself. In this regime, construction of $\tilde{\mathcal{A}}_\mu$ in a smooth gauge is unavoidable, and the present local formulation provides a clear advantage. We demonstrated this in three dimensions by evaluating the Chern--Simons 3-form in the FKM model. Comparison with finite-difference and gauge-invariant 4-curvature approaches show that the single-$k$ formulation yields the correct axion angle over an adiabatic cycle and exhibits improved convergence with respect to mesh densities. 
+In higher dimensions, however, no analogous gauge-invariant discretization exists for geometric quantities that depend explicitly on the Berry connection itself. In this regime, construction of $\tilde{\mathcal{A}}_\mu$ in a smooth gauge is unavoidable, and the present local formulation provides a clear advantage. We demonstrated this in three dimensions by evaluating the Chern--Simons 3-form in the FKM model. Comparison with finite-difference and gauge-invariant 4-curvature approaches shows that the single-$k$ formulation yields the correct axion angle over an adiabatic cycle and exhibits improved convergence with increasing mesh density. 
 
-Although not yet implemented in a fully self-consistent first-principles workflow, the derivation is completely general and directly applicable in that setting. Because projection-gauge Berry connection is obtained as a strictly local object in momentum space, the method avoids reliance on neighboring-$k$ overlaps and large overlap matrices. This locality makes the approach naturally compatible with symmetry-reduced meshes, nonuniform or adaptive grids, and parallel implementations in which each $k$-point is treated independently. It also eliminates the need for maximal localization procedures that are commonly used to stabilize finite-difference derivatives in conventional Wannier workflows. While adequate $k$-point sampling remains essential for Brillouin-zone integrals, the present approach removes a distinct source of numerical instability inherent to finite-difference constructions.
+Although not yet implemented in a fully self-consistent first-principles workflow, the derivation is completely general and directly applicable in that setting. Because the projection-gauge Berry connection is obtained as a strictly local object in momentum space, the method avoids reliance on neighboring-$k$ overlaps and large overlap matrices. This locality makes the approach naturally compatible with symmetry-reduced meshes, nonuniform or adaptive grids, and parallel implementations in which each $k$-point is treated independently. It also eliminates the need for maximal localization procedures that are commonly used to stabilize finite-difference derivatives in conventional Wannier workflows. While adequate $k$-point sampling remains essential for Brillouin-zone integrals, the present approach removes a distinct source of numerical instability inherent to finite-difference constructions.
 
 Beyond topological response coefficients, the formulation is particularly well suited to optical and nonlinear response calculations, where off-diagonal position matrix elements play a central role. Interband electric-dipole matrix elements entering optical conductivity \cite{yates2007} and shift currents \cite{morimoto2016}, for example, are directly governed by the Berry connection in a smooth gauge. In conventional Wannier-interpolation frameworks, these quantities are reconstructed using finite-difference derivatives and overlap matrices on dense $k$-meshes. An analytic single-$k$ expression for the projection-gauge connection provides a route to evaluating such matrix elements without discretized momentum derivatives, potentially improving stability in systems with small band gaps or entangled subspaces. 
 
