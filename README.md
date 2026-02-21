@@ -13,17 +13,14 @@ Results are generated using the notebooks and scripts located in the [calculatio
 
 ## 📚 Citation
 
-If you use this code in your research, please cite our paper
+If you use this code in your research, please cite our paper.
 
-Shield: [![CC BY 4.0][cc-by-shield]][cc-by]
 
-This work is licensed under a
-[Creative Commons Attribution 4.0 International License][cc-by].
+The software is licensed under the GNU General Public License v3.0. See the LICENSE file for details.
 
-[![CC BY 4.0][cc-by-image]][cc-by]
+## Licenses
 
-[cc-by]: http://creativecommons.org/licenses/by/4.0/
-[cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
-[cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
+[![Code: GPL v3](https://img.shields.io/badge/Code-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Paper: CC BY 4.0](https://img.shields.io/badge/Paper-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 
