@@ -33,6 +33,21 @@ def fin_diff(U_k, mu, dk_mu, order_eps, mode='central'):
     v = fd_sum / (dk_mu)
     return v
 
+def inv_sqrt_hermitian_psd(A):
+    """
+    Return A^{-1/2} for Hermitian PSD A using eigh.
+    """
+    # Hermitize to kill numerical anti-Hermitian noise
+    A = 0.5 * (A + A.conj().swapaxes(-1, -2))
+
+    w, U = np.linalg.eigh(A)  # w >= 0 ideally
+   
+    inv_sqrt_w = 1.0 / np.sqrt(w)
+    inv_sqrt_w = np.where(np.isfinite(inv_sqrt_w), inv_sqrt_w, 0.0)
+
+    # U diag(inv_sqrt_w) U^\dagger
+    return (U * inv_sqrt_w[..., None, :]) @ U.conj().swapaxes(-1, -2), U, w
+
 def axion_angle_3form(
         model, 
         tf_list,
@@ -143,7 +158,7 @@ def axion_angle_3form(
         if use_tf_speedup:
             import tensorflow as tf
 
-            S_tf = tf.convert_to_tensor(S_occ, dtype=tf.complex64)
+            S_tf = tf.convert_to_tensor(S_occ, dtype=tf.complex128)
 
             # batched SVD on Metal
             D, W, V = tf.linalg.svd(S_tf, full_matrices=True)
@@ -165,6 +180,9 @@ def axion_angle_3form(
         U_SVD = W @ Vh  # Unitary part of SVD
         P = V @ Sigma @ Vh  # Semi-positive definite Hermitian part
 
+        invsqrt_O, V, evals = inv_sqrt_hermitian_psd(S_occ.conj().swapaxes(-1,-2) @ S_occ)
+        Vh = V.conj().swapaxes(-1, -2)
+
         # ----- Build V_mu (Kubo numerator / energy denominator), R_mu -----
         # Velocity operator in ORBITAL basis and rotate to eigenbasis:
         # v_k_rot[mu]_{nm} = <u_n| partial_mu H |u_m>
@@ -173,7 +191,6 @@ def axion_angle_3form(
         evecs_conj = u_nk_flat.conj()
         evecs_T = u_nk_flat.swapaxes(-1,-2)  # (n_kpts, n_beta, n_state, n_state)
 
-        
         # ------- V_mu -------
 
         # velocity operator
@@ -183,9 +200,9 @@ def axion_angle_3form(
 
         # Rotate velocity operator to energy eigenbasis
         if use_tf_speedup:
-            v_k_tf = tf.convert_to_tensor(v_k, dtype=tf.complex64)
-            evecs_conj_tf = tf.convert_to_tensor(evecs_conj, dtype=tf.complex64)
-            evecs_T_tf = tf.convert_to_tensor(evecs_T, dtype=tf.complex64)
+            v_k_tf = tf.convert_to_tensor(v_k, dtype=tf.complex128)
+            evecs_conj_tf = tf.convert_to_tensor(evecs_conj, dtype=tf.complex128)
+            evecs_T_tf = tf.convert_to_tensor(evecs_T, dtype=tf.complex128)
 
             v_k_rot = tf.matmul(
                 evecs_conj_tf[None, ...],  # (1, n_kpts, n_state, n_state)
@@ -230,22 +247,47 @@ def axion_angle_3form(
 
         # ------- X_mu --------
 
-        X_mu = -1j * R_mu + V_mu @ S_con
+        # X_mu = -1j * R_mu + V_mu @ S_con
+        X_mu = S_occ.conj().swapaxes(-1,-2) @ (R_mu + 1j* V_mu @ S_con)
+
 
         # ------- A_til --------
 
-        term = Vh @ S_occ.conj().swapaxes(-1,-2) @ X_mu @ Vh.conj().swapaxes(-1,-2)
-        term +=  term.conj().swapaxes(-1,-2)  # h.c.
+        term = -1j * X_mu
+        term += term.conj().swapaxes(-1,-2)  # h.c.
+        term = Vh @ term @ Vh.conj().swapaxes(-1,-2)
 
+        sigma = np.sqrt(evals)
         for a in range(term.shape[-2]):
             for b in range(term.shape[-1]):
-                term[..., a, b] *= (1 / (D[..., a] + D[..., b]))
+                term[..., a, b] *= (1 / (sigma[..., a] + sigma[..., b]))
+
+        L_inv = Vh.conj().swapaxes(-1,-2) @ term @ Vh
+
+        term1 = invsqrt_O @ X_mu @ invsqrt_O
+        term2 = 1j * L_inv @ invsqrt_O
 
         # Berry connection in projection gauge
-        A_til = 1j * (
-            U_SVD.conj().swapaxes(-1,-2) @ X_mu
-            -  Vh.conj().swapaxes(-1,-2) @ term @ Vh
-        ) @ np.linalg.inv(P)
+        A_til = term1 - term2
+
+        # term = Vh @ S_occ.conj().swapaxes(-1,-2) @ X_mu @ Vh.conj().swapaxes(-1,-2)
+        # term +=  term.conj().swapaxes(-1,-2)  # h.c.
+
+        # for a in range(term.shape[-2]):
+        #     for b in range(term.shape[-1]):
+        #         term[..., a, b] *= (1 / (D[..., a] + D[..., b]))
+
+        # # Berry connection in projection gauge
+        # A_til = 1j * (
+        #     U_SVD.conj().swapaxes(-1,-2) @ X_mu
+        #     -  Vh.conj().swapaxes(-1,-2) @ term @ Vh
+        # ) @ np.linalg.inv(P)
+
+        print("Min singular value of S_occ:", np.min(D))
+        # print("Min eigenvalue of S_occ^dagger S_occ:", np.min(evals))
+        # print("Max deviation of A_til from Hermiticity:", np.max(np.abs(A_til - A_til.conj().swapaxes(-1,-2))))
+
+        assert np.allclose(A_til, A_til.conj().swapaxes(-1,-2)), "A_til is not Hermitian!"
 
         # CS Axion angle
         dks = [1/nk for nk in nks]
@@ -263,8 +305,8 @@ def axion_angle_3form(
             omega_til = np.swapaxes(U_SVD.conj(), -1,-2) @ omega_kubo @ U_SVD
 
             if use_tf_speedup:
-                A_til_tf = tf.convert_to_tensor(A_til, tf.complex64)
-                Omega_til_tf = tf.convert_to_tensor(omega_til, tf.complex64)
+                A_til_tf = tf.convert_to_tensor(A_til, tf.complex128)
+                Omega_til_tf = tf.convert_to_tensor(omega_til, tf.complex128)
 
                 AOmega = tf.einsum('i...ab,jk...ba->ijk...', A_til_tf, Omega_til_tf)
                 AAA = tf.einsum('i...ab,j...bc,k...ca->ijk...', A_til_tf, A_til_tf, A_til_tf)
@@ -287,7 +329,7 @@ def axion_angle_3form(
         par_A = np.array([parx_A, pary_A, parz_A])
 
         if use_tf_speedup:
-            A_til_tf = tf.convert_to_tensor(A_til_par, tf.complex64)
+            A_til_tf = tf.convert_to_tensor(A_til_par, tf.complex128)
             AdA = tf.einsum('i...ab,jk...ba->ijk...', A_til_tf, par_A)
             AAA = tf.einsum('i...ab,j...bc,k...ca->ijk...', A_til_tf, A_til_tf, A_til_tf)
             integrand = tf.einsum("ijk, ijk... -> ...", epsilon, AdA - (2j/3) * AAA).numpy()
