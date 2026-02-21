@@ -1,0 +1,5 @@
+python >= 3.12
+pythtb >= 2.0
+matplotlib
+numpy >= 2.0
+tensorflow

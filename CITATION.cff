@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+title: "Exact Berry Connection in the Projection Gauge"
+message: "If you use this code, please cite the associated paper."
+type: software
+authors:
+  - family-names: Cole
+    given-names: Trey
+    affiliation: Rutgers University
+  - family-names: Vanderbilt
+    given-names: David
+    affiliation: Rutgers University
+repository-code: https://github.com/treycole/projection-connection
+license: MIT
+version: 1.0.0
+date-released: 2026-02-21
