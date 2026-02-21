@@ -617,6 +617,17 @@ At $\beta=\pi$, the system is in a topologically nontrivial phase, and a smooth,
 \end{align}
 These non-Kramers trial states are used only within a narrow window around $\beta=\pi$, indicated by the green dotted lines in Fig.~\ref{fig:1}, to avoid numerical instabilities associated with small singular values of the overlap matrix.
 
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=3.4in]{fkm_axion_angle_comparison.png}
+\end{center}
+% \centering
+\vspace{-7.5mm}
+\caption{The axion angle $\theta(\beta)$ over one adiabatic cycle $\beta \in [0, 2\pi]$. We compute $\theta$ using three independent approaches: (i) the gauge-invariant formulation based on integrating the second Chern form (four-curvature),  shown as a dotted black line; (ii) the Chern--Simons 3-form from \eq{CS3form-curv} using the analytic single-point Berry connection of \eq{tildeA_final}, plotted in blue; and (iii) the same Chern--Simons expression evaluated using the finite difference connection of \eq{fd_connection}, shown in red. The vertical green dotted lines mark the region within which we use trial wavefunctions that do not respect $\mathcal{T}$. The nontrivial second Chern number ($C_2 = 1$) produces a net $2\pi$ shift of $\theta$ over one adiabatic cycle.}
+\label{fig:1}
+% \vspace{-1mm}
+\end{figure}
+
 To avoid computing $\partial_\nu \mathcal{A}_\sigma$ in \eq{CS3form} by finite differences, we eliminate it in favor of the gauge-covariant non-Abelian Berry curvature
 \begin{equation}
     \Omega_{\mu\nu, mn} = \partial_{\mu} \mathcal{A}_{\nu, mn} - \partial_{\nu} \mathcal{A}_{\mu,mn} - i[\mathcal{A}_\mu, \mathcal{A}_{\nu}]_{mn}
@@ -638,17 +649,6 @@ From the trial states, we construct the overlap matrices defined in \eqs{ovlp}{S
 The agreement with the gauge-invariant four-curvature result is excellent over the entire cycle. At $\beta=\pi$, symmetry enforces $\theta=\pi$, and our numerical value deviates from this by less than $10^{-6}$, with the residual error attributable to the Brillouin-zone discretization of the integral and finite numerical precision.
 
 \subsection{Comparison with finite-difference connections}
-
-\begin{figure}[t!]
-\begin{center}
-\includegraphics[width=3.4in]{fkm_axion_angle_comparison.png}
-\end{center}
-% \centering
-\vspace{-7.5mm}
-\caption{The axion angle $\theta(\beta)$ over one adiabatic cycle $\beta \in [0, 2\pi]$. We compute $\theta$ using three independent approaches: (i) the gauge-invariant formulation based on integrating the second Chern form (four-curvature),  shown as a dotted black line; (ii) the Chern--Simons 3-form from \eq{CS3form-curv} using the analytic single-point Berry connection of \eq{tildeA_final}, plotted in blue; and (iii) the same Chern--Simons expression evaluated using the finite difference connection of \eq{fd_connection}, shown in red. The vertical green dotted lines mark the region within which we use trial wavefunctions that do not respect $\mathcal{T}$. The nontrivial second Chern number ($C_2 = 1$) produces a net $2\pi$ shift of $\theta$ over one adiabatic cycle.}
-\label{fig:1}
-% \vspace{-1mm}
-\end{figure}
 
 For comparison, we also compute the axion angle using the standard finite-difference construction of the non-Abelian Berry connection. The procedure is as follows:
 (i) we construct the projected and orthonormalized Bloch-like states $\ket{\tilde{u}_{n\mathbf{k}}}$ from \eq{tildepsi_from_phi},
