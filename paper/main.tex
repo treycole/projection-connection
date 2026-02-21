@@ -1,7 +1,9 @@
 \include{preamble}
 \begin{document}
 
-\title{Chern-Simons axion angle in the projection gauge}
+\title{ 
+Exact expression for the Berry connection in the projection gauge
+}
 
 \author{Trey Cole}
 \affiliation{
@@ -12,418 +14,651 @@ Piscataway, New Jersey 08854, USA}
 \affiliation{
 Department of Physics \& Astronomy, Rutgers University,
 Piscataway, New Jersey 08854, USA}
-
 \begin{abstract}
-The Chern-Simons axion angle $\theta$ is given by a Brillouin-zone integral of the Chern-Simons 3-form and requires a smooth, periodic gauge for the occupied Bloch states in order for the integral to be numerically evaluated stably. In practice, one often enforces smoothness via the projection method and then evaluates the non-Abelian Berry connection in the projection gauge, $\tilde{\mathcal{A}}_\mu$, using finite differences on dense $k$-meshes, which is numerically fragile and sensitive to gauge discontinuities. Here we show that $\tilde{\mathcal{A}}_\mu$ can instead be obtained \emph{analytically} at each $k$ point from a Sylvester-equation solution involving the singular values and singular vectors of the overlap matrix between Bloch states and trial orbitals. The resulting expression is a single-point, Kubo-like formula that eliminates finite differences and overlaps between neighboring $k$ points. We demonstrate the method on the Fu-Kane-Mele tight-binding model, where a cyclic symmetry-breaking modulation pumps $\theta$ from $0$ to $2\pi$ in accord with the nontrivial second Chern number.
+The Berry connection encodes the momentum-space geometry of occupied Bloch states in gapped insulators and plays a central role in topological materials. While gauge-invariant quantities can be evaluated directly from overlap matrices between neighboring $k$ points in an arbitrary gauge, accessing the Berry connection itself as a continuously differentiable field requires specifying a smooth gauge over the Brillouin zone. In practical Wannier-based implementations, the Berry connection is typically obtained using finite-difference formulas involving neighboring-$k$ overlaps. Such constructions are intrinsically approximate and can become numerically sensitive in the presence of small band gaps or when evaluating higher-order response functions that depend explicitly on the connection, such as the Chern--Simons axion angle. In this work, we derive an exact expression for the non-Abelian Berry connection in the projection gauge that is local in crystal momentum. Starting from projected and orthonormalized Bloch-like states, we obtain a closed-form equation expressed entirely in terms of quantities evaluated at a single crystal momentum. We validate this formulation in one and three dimensions by computing the Berry phase and Chern--Simons axion angle in a tight-binding setting. 
 \end{abstract}
 
 \maketitle
 
-\noindent
-
 \section{Introduction}
-The Chern-Simons axion angle $\theta$ is a geometric property of the occupied Bloch states of a three-dimensional insulator. It is defined modulo $2\pi$ and can be expressed as a Brillouin-zone integral of the Chern-Simons 3-form constructed from the non-Abelian Berry connection. While $\theta$ plays a central role in magnetoelectric response theory and in the topological classification of insulating phases, its direct numerical evaluation is nontrivial. The difficulty stems from the fact that the Chern-Simons integrand is not gauge-covariant, so the computed value of $\theta$ depends sensitively on the smoothness and periodicity of the chosen Bloch-state gauge throughout the Brillouin zone.
 
-Explicitly, the Chern-Simons axion angle is given by \cite{chern1974characteristic, Malashevich_2010, mong2010antiferromagnetic, essin2010orbital}
+The modern theory of electronic structure has revealed that many physical properties of crystalline solids are governed not only by band energies, but by the geometry of the occupied Bloch states in momentum space. This geometry is encoded in the Berry connection and its derivatives, which define a gauge structure over the Brillouin zone. Observable consequences of this structure include electric polarization, anomalous and nonlinear Hall effects, orbital magnetization, optical and transport responses, and the magnetoelectric coupling \cite{xiao2010}. These quantities depend on the geometric structure of the occupied-band bundle, rather than solely on the dispersion relation of the bands. In multiband systems, the relevant geometric object is the non-Abelian Berry connection, 
+\begin{equation}
+    \label{eq:berry_connection}
+    \left( \mathcal{A}_\mu \right)_{mn}
+    =
+    i \langle u_{m\mathbf{k}} | \partial_{\mu} u_{n\mathbf{k}} \rangle ,
+\end{equation}
+where $|u_{n\mathbf{k}}\rangle$ are the occupied cell-periodic Bloch eigenstates and $\partial_{\mu}$ denotes differentiation with respect to the $\mu$-th Cartesian component of crystal momentum \cite{Vanderbilt_2018}.
+
+In practical electronic-structure calculations, the Bloch eigenstates are obtained by diagonalizing the Hamiltonian independently at each $k$ point. The resulting gauge, here referred to as the \emph{Hamiltonian gauge}, is therefore arbitrary up to $k$-dependent single-band phase factors and may have nonanalytic behavior at degeneracies in the Brillouin zone. As a consequence, direct finite-difference evaluations of the Berry connection in this gauge are numerically unstable and ill-defined, even though gauge-invariant quantities constructed from them may remain well behaved.
+
+Evaluating $\mathcal{A}_\mu$ itself requires specifying a smooth and continuous gauge over the Brillouin zone. The Berry connection is not gauge-covariant and, under a smooth and continuous $k$-dependent unitary rotation $U(\mathbf{k})$ within the occupied subspace, transforms as
+\begin{equation}
+\label{eq:tildeA}
+    \tilde{\mathcal{A}}_\mu
+    =
+    U^\dagger \mathcal{A}_\mu U
+    + i U^\dagger \partial_{\mu} U .
+\end{equation}
+For any initially discontinuous gauge, the unitary that smoothens the gauge will also itself be discontinous, making $\partial_{\mu} U$ ill-defined. 
+
+Wannier-based workflows provide a practical solution by constructing a smooth gauge through projection onto localized trial orbitals, optionally followed by disentanglement and maximal localization \cite{marzari1997, souza2001, marzari2012}. The resulting \emph{projection (or Wannier) gauge} enables stable evaluation of geometric quantities. In this setting, the projection-gauge Berry connection encodes the off-diagonal position matrix elements in the Wannier basis \cite{xiao2010, Vanderbilt_2018}. These terms represent what is often referred to as the ``external" contributions to the band geometry, in contrast to the ``internal" contributions that are captured by the tight-binding eigenvectors. These external terms are needed, for example, when computing electric-dipole transition moments for the interband optical conductivity \cite{yates2007}, and Wannier-interpolating the Berry curvature \cite{wang2006}. 
+
+However, in standard Wannier codes, such as \textsc{Wannier90} \cite{MOSTOFI20142309}, the projection-gauge Berry connection is not computed analytically; instead it is approximated by finite-difference overlaps between the first-principles Bloch eigenstates at neighboring $k$-points \cite{marazzo2024, marzari1997}. Higher-order generalizations of this finite-difference scheme for computing $\tilde{A}_\mu$ have recently been introduced \cite{cistaro2023}. While robust and widely used, these constructions discretize momentum derivatives at the outset and introduce truncation errors tied to $k$-mesh spacing and gauge alignment. 
+
+In this work, we derive an explicit closed-form expression for the non-Abelian Berry connection directly in the simple projection gauge (i.e., obtained as in the usual Wannierization procedure but without maximal localization) without recourse to finite differences or neighboring-$k$ overlaps. Starting from the projected and orthonormalized Bloch-like states produced by the projection method, we obtain a single-point, Kubo-like formula for $\tilde{A}_\mu(\mathbf{k})$ expressed entirely in terms of overlap matrices, position matrix elements of the trial orbitals, and interband velocity matrix elements. The connection is thus determined exactly at each $k$ from local information in momentum space. 
+
+We apply the formulation derived in Sec.~\ref{sec:conn} to tight-binding models in one and three dimensions. In Sec.~\ref{sec:berry_phase_proj}, we compute the Berry phase of the Su--Schrieffer--Heeger model, providing a controlled one-dimensional test of the single-point construction. In Sec.~\ref{sec:FKM}, we evaluate the Chern--Simons axion angle in the Fu--Kane--Mele model, demonstrating that the analytic projection-gauge connection remains stable in higher-dimensional, non-Abelian response calculations. Together, these tests illustrate the numerical robustness of the approach. 
+
+
+\section{Projection gauge}
+\label{sec:proj_gauge}
+
+A central practical difficulty in evaluating Berry connections is that the eigenstates produced by a band-structure calculation are defined only up to an arbitrary $k$-dependent phase rotation acting on each individual band. As a result, the ``Hamiltonian gauge'' obtained by diagonalizing the Hamiltonian independently at each $k$ typically exhibits random phases and nonanalytic behavior across the Brillouin zone. The projection method provides a simple and widely used way to impose a smooth periodic choice of frame for the occupied subspace by aligning it to a set of localized trial orbitals and orthonormalizing the result \cite{souza2001, marzari2012}.
+
+Let $\{|\psi_{n\mathbf{k}}\rangle\}$ denote the Bloch eigenstates of the Hamiltonian at crystal momentum $\mathbf{k}$, with band index $n$ and $\{|u_{n\mathbf{k}}\rangle\}$ their cell-periodic counterparts. We assume a gapped insulator with $J$ occupied bands and denote the occupied-band projector by
+\begin{equation}
+\label{eq:Pocc}
+\hat{P}(\mathbf{k}) \equiv \sum_{n}^{\mathrm{occ}} |u_{n\mathbf{k}}\rangle\langle u_{n\mathbf{k}}|.
+\end{equation}
+The projection method begins by choosing a set of $J$ localized trial orbitals $\{|g_m\rangle\}_{m=1}^J$ in the home unit cell.
+Physically, these are intended to resemble the desired Wannier functions (or, more generally, to span a subspace close to the occupied manifold).
+
+Each $|g_m\rangle$ has a phase-twisted counterpart
+\begin{equation}
+    |t_{m\mathbf{k}} \rangle = e^{-i\mathbf{k}\cdot \mathbf{r}} | g_m \rangle
+\end{equation}
+that can be projected onto the occupied subspace at $\mathbf{k}$ to define a set of ``Bloch-like'' states
+\begin{equation}
+\label{eq:bloch-like}
+|\phi_{m\mathbf{k}}\rangle
+\equiv
+\hat{P}(\mathbf{k})|t_{m\mathbf{k}}\rangle
+=
+\sum_{n}^{\mathrm{occ}} |u_{n\mathbf{k}}\rangle\langle u_{n\mathbf{k}}|t_{m \mathbf{k}}\rangle.
+\end{equation}
+These states lie entirely in the occupied subspace by construction, but they are generally neither orthonormal nor linearly independent.
+
+Because the projected states in \eq{bloch-like} are not orthonormal, we introduce their Gram matrix
+\begin{equation}
+\label{eq:O_def}
+(\mathcal{O}_{\mathbf{k}})_{mn}
+\equiv
+\langle \phi_{m\mathbf{k}}|\phi_{n\mathbf{k}}\rangle.
+\end{equation}
+It is convenient to collect the overlaps between occupied Bloch states and trial orbitals into the $J\times J$ matrix
+\begin{equation}
+\label{eq:ovlp}
+S_{nm}(\mathbf{k})
+\equiv
+\langle u_{n\mathbf{k}}|t_{m \mathbf{k}}\rangle,
+\qquad n\in\mathrm{occ}.
+\end{equation}
+Using \eqs{bloch-like}{ovlp} and the orthonormality of the Bloch eigenstates, one finds immediately that
+\begin{equation}
+\label{eq:O_SdagS}
+\mathcal{O}_{\mathbf{k}} = S^\dagger_{\mathbf{k}} S_{\mathbf{k}}.
+\end{equation}
+Thus $\mathcal{O}_{\mathbf{k}}$ is Hermitian and positive semidefinite.
+A necessary condition for the projection method to define a $J$-dimensional frame is that $\mathcal{O}_{\mathbf{k}}$ be invertible,
+i.e., that the projected states $\{|\phi_{m\mathbf{k}}\rangle\}$ be linearly independent. In practice, small eigenvalues of $\mathcal{O}_{\mathbf{k}}$ signal a poorly conditioned projection and can lead to numerical instability.
+
+When $\mathcal{O}_{\mathbf{k}}$ is invertible, we obtain an orthonormal frame by symmetric (L\"owdin) orthonormalization,
+\begin{equation}
+\label{eq:tildepsi_from_phi}
+|\tilde{u}_{n\mathbf{k}}\rangle
+\equiv
+\sum_m |\phi_{m\mathbf{k}}\rangle\,(\mathcal{O}^{-1/2}_{\mathbf{k}})_{mn}.
+\end{equation}
+By construction,
+\begin{equation}
+\langle \tilde{u}_{m\mathbf{k}}|\tilde{u}_{n\mathbf{k}}\rangle
+=
+[(\mathcal{O}^{-1/2}_{\mathbf{k}})^\dagger \mathcal{O}_{\mathbf{k}} (\mathcal{O}^{-1/2}_{\mathbf{k}})]_{mn}
+=
+\delta_{mn},
+\end{equation}
+so $\{|\tilde{u}_{n\mathbf{k}}\rangle\}$ acts as an orthonormal basis of the occupied subspace at each $\mathbf{k}$.
+We refer to this orthonormal frame as the \emph{projection gauge} (or equivalently, the Wannier gauge produced by projection).
+
+For an isolated group of bands in an ordinary insulator, $\hat P(\mathbf{k})$ can be chosen smooth over the Brillouin zone, and for suitably chosen localized trial orbitals the matrices $S(\mathbf{k})$ and $\mathcal{O}(\mathbf{k})$ vary smoothly as well,
+leading to a smooth and (when topologically allowed) periodic frame $\{|\tilde{\psi}_{n\mathbf{k}}\rangle\}$
+\cite{marzari1997, marzari2012}. In $\mathbb{Z}_2$ topological insulators, a smooth and periodic \emph{time-reversal-symmetric} gauge is obstructed; nevertheless, a smooth periodic gauge can still be constructed by choosing trial orbitals that explicitly break $\mathcal{T}$, thereby avoiding the constraint that enforces the obstruction \cite{soluyanov2011}.
+
+\section{Non-Abelian connection in the projection gauge}
+\label{sec:conn}
+
+The goal of this section is to obtain the non-Abelian Berry connection associated with the projection-gauge frame
+$\{|\tilde{u}_{n\mathbf{k}}\rangle\}$ constructed in Sec.~\ref{sec:proj_gauge}. We will derive a closed, \emph{single-$k$} formula for the projection-gauge connection, expressed entirely in terms of
+(i) overlaps to trial orbitals, (ii) position matrix elements involving the trial orbitals, and
+(iii) interband (Kubo-like) velocity matrix elements.
+No finite differences and no overlaps between neighboring $k$ points are required.
+
+The projection-gauge connection is defined as
+\begin{equation}
+\label{eq:Atilde_def_repeat}
+\tilde{\mathcal{A}}_{\mu,mn}
+\equiv
+i\langle \tilde{u}_{m\mathbf{k}}|\partial_{\mu}\tilde{u}_{n\mathbf{k}}\rangle .
+\end{equation}
+It is convenient to use matrix notation, in which $|\phi\rangle$ is the column vector of states $|\phi_{n\mathbf{k}}\rangle$,
+and similarly for $|\tilde{u}\rangle$. We also drop $\mathbf{k}$ labels, which are now always implicit.
+Then
+\begin{equation}
+\label{eq:tildepsi_matrix}
+|\tilde{u}\rangle = |\phi\rangle\,\mathcal{O}^{-1/2}.
+\end{equation}
+Differentiating with respect to $k_\mu$ gives
+\begin{equation}
+\label{eq:dtildepsi_matrix}
+\partial_\mu|\tilde{u}\rangle
+=
+(\partial_\mu|\phi\rangle)\,\mathcal{O}^{-1/2}
++
+|\phi\rangle\,\partial_\mu(\mathcal{O}^{-1/2}).
+\end{equation}
+Substituting into \eqref{eq:Atilde_def_repeat} and using $\langle\phi|\phi\rangle=\mathcal{O}$ yields the identity
+\begin{equation}
+\label{eq:Atilde_split_repeat}
+\tilde{\mathcal{A}}_\mu
+=
+i\,\mathcal{O}^{-1/2}\,\langle\phi|\partial_\mu\phi\rangle\,\mathcal{O}^{-1/2}
+\;+\;
+i\,\mathcal{O}^{1/2}\,\partial_\mu(\mathcal{O}^{-1/2}).
+\end{equation}
+Using $\partial_\mu(\mathcal{O}^{1/2}\mathcal{O}^{-1/2})=0$ we have $\mathcal{O}^{1/2}\,\partial_\mu(\mathcal{O}^{-1/2})=-(\partial_\mu \mathcal{O}^{1/2})\mathcal{O}^{-1/2}$, hence
+\begin{equation}
+\label{eq:Atilde_key_identity}
+\tilde{\mathcal{A}}_\mu
+=
+i\,\mathcal{O}^{-1/2}\,\langle\phi|\partial_\mu\phi\rangle\,\mathcal{O}^{-1/2}
+\;-\;
+i\,\partial_\mu(\mathcal{O}^{1/2})\,\mathcal{O}^{-1/2}.
+\end{equation}
+
+Equation \eqref{eq:Atilde_key_identity} is at the core of the derivation. It shows that $\tilde{\mathcal{A}}_\mu$ is determined once we can compute (i) the derivative of $\mathcal{O}^{1/2}$, and (ii) the projected-state matrix element $\langle\phi|\partial_\mu\phi\rangle$, both at fixed $k$.
+
+\subsection{Sylvester equation for $\partial_\mu \mathcal{O}^{1/2}$}
+
+We next obtain $\partial_\mu \mathcal{O}^{1/2}$ in closed form. Differentiating the identity $(\mathcal{O}^{1/2})^2=\mathcal{O}$ gives
+\begin{equation}
+\label{eq:sylvester_P}
+\mathcal{O}^{1/2}(\partial_\mu \mathcal{O}^{1/2})+(\partial_\mu \mathcal{O}^{1/2})\mathcal{O}^{1/2}=\partial_\mu \mathcal{O},
+\end{equation}
+which is a Sylvester equation of the standard form $MX + XM = Y$ for the unknown $X=\partial_\mu \mathcal{O}^{1/2}$, with $M=\mathcal{O}^{1/2}$ and $Y=\partial_\mu \mathcal{O}$. 
+
+Consider the Sylvester map $\mathcal{L}_M:\,X\mapsto MX+XM$ for a Hermitian positive semidefinite matrix $M$. If $M$ is positive definite, $\mathcal{L}_M$ is invertible on the full matrix space. More generally, when $M$ has a nontrivial kernel, $\mathcal{L}_M$ remains invertible on the subspace of matrices with no components in $\ker{M} \otimes \ker{M}$. On this subspace the Sylvester equation admits a unique solution, which we denote $X=\mathcal{L}_M^{-1}[Y]$. 
+
+With this notation, the formal solution to \eq{sylvester_P} reads
+\begin{equation}
+\label{eq:sylv}
+\partial_\mu \mathcal{O}^{1/2}
+=
+\mathcal{L}_{\mathcal{O}^{1/2}}^{-1}\!\left[\partial_\mu \mathcal{O}\right].
+\end{equation}
+To evaluate \eq{sylv} numerically, we transform \eq{sylvester_P} into the eigenbasis of $\mathcal{O}^{1/2}$, letting
+\begin{equation}
+\label{eq:M_diag}
+\mathcal{O}^{1/2} = V\Sigma V^\dagger,
+\;\;
+\Sigma=\mathrm{diag}(\sigma_1,\dots,\sigma_J),
+\end{equation}
+where $V$ is unitary and $\sigma_i \ge 0$ are the eigenvalues\footnote{Equivalently, $\sigma_i$ are the singular values of the projection matrix $S$.} of $\mathcal{O}^{1/2}$. Some algebraic manipulation yields the componentwise solution (see Appendix \ref{apdx:sylvester} for the full derivation),
+\begin{equation}
+\label{eq:syl_sol}
+\mathcal{L}_{\mathcal{O}^{1/2}}^{-1}[\partial_\mu \mathcal{O}]_{mn}
+=
+V_{mi}\left[
+\frac{(V^\dagger (\partial_\mu \mathcal{O}) V)_{ij}}{\sigma_i+\sigma_j}
+\right]V^\dagger_{jn} ,
+\end{equation}
+where the division is understood to be elementwise inside the brackets and outside the brackets repeated indices are implicitly summed over.
+
+Because $\sigma_i \ge 0$, the only potentially vanishing denominators satisfy $\sigma_i+\sigma_j=0$, which implies $\sigma_i=\sigma_j=0$. Therefore, $\mathcal{L}_{\mathcal{O}^{1/2}}^{-1}$ is well defined provided that $\partial_\mu \mathcal{O}$ has no components in the null--null block $\ker(\mathcal{O}^{1/2}) \otimes \ker(\mathcal{O}^{1/2})$. If $\mathcal{O}^{1/2}$ is strictly positive definite (all $\sigma_i>0$), $\mathcal{L}_{\mathcal{O}^{1/2}}$ is invertible on the full matrix space.
+
+In practice, very small $\sigma_i$ correspond to trial-orbitals with weak support on the occupied subspace, leading to an ill-conditioned projection and numerical instability in \eq{syl_sol}. This can be mitigated by improving the choice of trial orbitals or, when appropriate, restricting to the well-conditioned subspace. If the projection loses rank---for example due to a topological obstruction---some $\sigma_i$ vanish at certain $k$, signaling that a globally smooth projection gauge cannot be constructed. 
+
+The remaining ingredient is the derivative of the overlap matrix $\mathcal{O}_{mn}=\langle\phi_m|\phi_n\rangle$. By direct differentiation,
+\begin{equation}
+\label{eq:parmu_O}
+\partial_\mu \mathcal{O}
+=
+\langle \partial_\mu \phi|\phi\rangle
++
+\langle \phi|\partial_\mu \phi\rangle
+=
+\langle \phi|\partial_\mu \phi\rangle + \text{h.c.},
+\end{equation}
+where ``h.c.'' denotes the Hermitian conjugate of the matrix
+$\langle \phi|\partial_\mu \phi\rangle$.
+Notably, the same matrix $\langle \phi|\partial_\mu \phi\rangle$
+also appears in the first term of Eq.~\eqref{eq:Atilde_key_identity}.
+A closed, single-$k$ expression for this object will be derived in Sec.~\ref{sec:eval}.
+
+\subsection{Single-$k$ evaluation of $\langle\phi|\partial_\mu\phi\rangle$}
+\label{sec:eval}
+
+We now turn our attention to the evaluation of $\langle\phi|\partial_\mu\phi\rangle$, which is the central quantity that appears explicitly in the first term of \eq{Atilde_key_identity} and implicitly in the second term via \eq{sylv}. To show that it can be expressed only in terms of single-$k$ ingredients, we differentiate \eq{bloch-like} to get
+\begin{equation}
+\label{eq:phidphi_split}
+\langle\phi_m|\partial_\mu\phi_n\rangle
+=
+\langle t_m|\hat P\,(\partial_\mu \hat P)\,|t_n\rangle
++
+\langle t_m|\hat P\,\partial_\mu|t_n\rangle
+\end{equation}
+which cleanly separates two physical effects: (i) the explicit $k$-dependence of the $k$-periodic trial orbital, which produces a term proportional to the position operator, and (ii) the $k$-dependence of the occupied projector $\hat P(\mathbf{k})$, which encodes interband mixing and produces a Kubo-like contribution. We evaluate these two terms in turn.
+
+\paragraph*{(i) Trial-orbital (position-matrix-element) term.}
+Using $|t_n\rangle=e^{-i\mathbf{k}\cdot\hat{\mathbf r}}|g_n\rangle$ one finds
+\begin{equation}
+i\,\partial_\mu |t_n\rangle = \hat r_\mu |t_n\rangle .
+\end{equation}
+It is therefore natural to define the occupied--trial position matrix elements
+\begin{equation}
+\label{eq:Rmu_def_here}
+(\mathcal{R}_\mu)_{mn}
+\equiv
+\langle u_{m}|\hat r_\mu|t_{n}\rangle,
+\qquad m\in\mathrm{occ},
+\end{equation}
+Then, returning to the second term in \eq{phidphi_split},
+\begin{align}
+i\langle t_m|\hat P\,\partial_\mu|t_n\rangle
+&=
+\sum_{\ell}^{\mathrm{occ}}
+\langle t_m|u_\ell\rangle\,\langle u_\ell|\hat r_\mu|t_n\rangle
+\nonumber\\
+&=
+\sum_{\ell}^{\mathrm{occ}} S^*_{\ell m}\,(\mathcal{R}_\mu)_{\ell n}
+=
+\big(S^\dagger \mathcal{R}_\mu\big)_{mn}.
+\label{eq:trial_term_result}
+\end{align}
+Thus the trial-orbital contribution to $i\langle\phi|\partial_\mu\phi\rangle$ is simply $S^\dagger \mathcal{R}_\mu$.
+
+\paragraph*{(ii) Interband (Kubo-like) projector-derivative term.}
+The remaining term involves $\hat P(\partial_\mu\hat P)$, which only has support between occupied and unoccupied spaces because
+$\hat P(\partial_\mu\hat P)\hat P=0$.
+Introducing the complementary projector $\hat Q=1-\hat P$ and inserting a complete set of unoccupied eigenstates, one finds
+\begin{equation}
+\label{eq:PdP_expand}
+\hat P(\partial_\mu \hat P)
+=
+\hat P(\partial_\mu\hat P)\hat Q
+=
+\sum_{\ell}^{\mathrm{occ}}\sum_{c}^{\mathrm{empty}}
+|u_\ell\rangle\langle \partial_\mu u_\ell| u_c\rangle\langle u_c|.
+\end{equation}
+Using first-order perturbation theory for $|u_\ell \rangle$ in the eigenbasis of $H(\mathbf{k})$ gives
+\begin{equation}
+\label{eq:pt_id}
+\langle \partial_\mu u_\ell| u_c\rangle
+=
+\frac{\langle u_\ell|\partial_\mu H|u_c \rangle}{E_{\ell}-E_{c}},
+\qquad \ell \in\mathrm{occ},\ c\in\mathrm{empty}.
+\end{equation}
+It is therefore convenient to define the occupied--conduction ``velocity'' matrix
+\begin{equation}
+\label{eq:Vmu_def_here}
+(\mathcal{V}_\mu)_{\ell c}
+\equiv
+\frac{\langle u_{\ell }|\partial_{\mu}H|u_{c}\rangle}{E_{\ell}-E_{c}},
+\qquad \ell \in\mathrm{occ},\ c\in\mathrm{empty},
+\end{equation}
+and the complementary overlap matrix
+\begin{equation}
+\label{eq:Sperp}
+(S^\perp)_{c n}\equiv \langle u_{c}|t_{n}\rangle,
+\qquad c\in\mathrm{empty}.
+\end{equation}
+Then
+\begin{align}
+i\langle t_m|\hat P(\partial_\mu\hat P)|t_n\rangle
+&=
+i\sum_{\ell}^{\mathrm{occ}}\sum_{c}^{\mathrm{empty}}
+\langle t_m|u_\ell \rangle
+\langle \partial_\mu u_\ell | u_c\rangle
+\langle u_c|t_n\rangle
+\nonumber\\
+&= i
+\sum_{\ell}^{\mathrm{occ}}\sum_{c}^{\mathrm{empty}}
+S^*_{\ell m}\,
+\mathcal{V}_{\ell c}
+S^\perp_{c n}.
+\label{eq:interband_term_mid}
+\end{align}
+This is precisely a Kubo-like expression that takes the compact matrix form
+\begin{equation}
+\label{eq:interband_term_result}
+i\langle t|\hat P(\partial_\mu\hat P)|t\rangle
+=
+iS^\dagger\,\mathcal{V}_\mu\,S^\perp .
+\end{equation}
+
+\paragraph*{Final single-$k$ form.}
+Combining \eqref{eq:trial_term_result} and \eqref{eq:interband_term_result}, we obtain
+\begin{equation}
+\label{eq:phi_dphi_final}
+i\langle\phi|\partial_\mu\phi\rangle
+=
+S^\dagger\!\left(\mathcal{R}_\mu+i\mathcal{V}_\mu S^\perp\right).
+\end{equation}
+Equation \eqref{eq:phi_dphi_final} is the desired single-$k$ expression for the projected-state matrix element entering Eq.~\eqref{eq:Atilde_key_identity}. Together with the Sylvester solution \eqs{sylv}{parmu_O}, it provides
+a fully local construction of the projection-gauge connection $\tilde{\mathcal{A}}_\mu(\mathbf{k})$. Substituting, we find
+\begin{align}
+\label{eq:tildeA_final}
+    \tilde{\mathcal{A}}_\mu(\mathbf{k}) = \; &\mathcal{O}^{-1/2} S^\dagger \left( \mathcal{R}_\mu + i \mathcal{V}_\mu S^\perp\right) \mathcal{O}^{-1/2} - \\ \nonumber &i \mathcal{L}^{-1}_{\mathcal{O}^{1/2}}[-i S^\dagger\left( \mathcal{R}_\mu + i \mathcal{V}_\mu S^\perp\right) + \mathrm{h.c.}]\;\mathcal{O}^{-1/2}
+\end{align}
+
+Equation \eqref{eq:tildeA_final} completes the construction of the projection-gauge Berry connection in terms of single-$k$ quantities. All dependence on derivatives of Bloch eigenstates has been eliminated in favor of the overlap matrices between Bloch eigenstates and trial orbitals, position matrix elements involving the trial orbitals, and a Kubo-like interband term that depends only on the occupied and empty projectors. This expression is exact at a given $k$ and---as long as the occupied subspace is smooth and the projection is well-conditioned---yields a well-defined and numerically stable non-Abelian connection without recourse to finite-difference schemes or overlaps between neighboring $k$ points.
+
+Below we test the applicability of the analytic expression for $\tilde{A}_\mu$ in a tight-binding setting for simplicity and clarity. Although the derivation is completely general and applies equally to first-principles Bloch states, tight-binding models allow our expression to be compared against standard finite-difference constructions without additional complications. In this setting, we form the projection gauge by projecting the tight-binding energy eigenstates onto a set of trial orbitals constructed as linear combinations of the tight-binding basis orbitals. We then compute the Berry connection in this gauge via Eq.~\ref{eq:tildeA_final}. In a first principles setting, this same projection-gauge Berry connection would represent the ``external" contribution if computed from the projection matrices given by \textsc{Wannier90}, for example. 
+
+All tight-binding calculations are performed using \textsc{PythTB} \cite{Cole_Python_Tight_Binding_2025}, which provides tools for constructing tight-binding models, generating smooth projection gauges, and evaluating Berry phases and related geometric quantities.
+
+\section{Berry phase in the projection gauge}
+\label{sec:berry_phase_proj}
+
+We first test the single-$k$ expression for the Berry connection derived in Sec.~\ref{sec:conn} in the simplest possible setting: the Berry phase of a one-dimensional insulator. In one dimension, the Berry phase admits a well-known gauge-invariant formulation in terms of Wilson loops or overlap matrices between neighboring Bloch states. Our goal here is not to replace these established constructions, which are optimal in this setting, but rather to verify that the projection-gauge Berry connection reproduces the correct Berry phase in the continuum limit and to clarify the origin of discrepancies at finite $k$-mesh resolution.
+
+\subsection{Berry phase in one dimension}
+
+In one-dimensional insulating systems, the Berry phase accumulated by the occupied states upon traversing the Brillouin zone is a fundamental geometric quantity that admits a physical interpretation in terms of electronic polarization \cite{vanderbilt1993, resta1994}. We consider this as a first test case for our single-$k$ formulation of the Berry connection.
+
+For a choice of Bloch states $\{|u_{n k}\rangle\}$ spanning the occupied subspace, the total Berry phase is given by
+\begin{equation} 
+\label{eq:berry_phase_1d}
+\phi = \int_{\mathrm{BZ}} dk \, \text{Tr}\left[ \mathcal{A}(k) \right],
+\end{equation}
+where the trace is taken over the occupied bands. Because only the trace appears, the Berry phase depends only on the band-summed component of the non-Abelian connection. The Berry phase is invariant modulo $2\pi$ under smooth $k$-dependent gauge transformations of the occupied subspace.
+
+In numerical calculations, the Berry phase is rarely evaluated by simple quadrature of the integral in Eq.~\eqref{eq:berry_phase_1d} on a $k$-mesh. Instead, it is typically obtained from the holonomy of the occupied subspace around the Brillouin zone, expressed in terms of Wilson loops or overlap matrices between neighboring $k$-points.
+On a discrete $k$ mesh $\{k_j\}$, one defines the overlap (or link) matrices
+\begin{equation}
+\label{eq:overlap_matrix}
+M_{mn}(k_j,k_{j+1}) = \langle u_{m k_j} | u_{n k_{j+1}} \rangle .
+\end{equation}
+which describes the parallel transport of the occupied subspace between neighboring $k$-points in momentum space. From these overlaps, one may define a discrete (band-traced) Berry connection associated with the link $(k_j, k_{j+1})$ as 
+\begin{equation}
+    \label{eq:discrete_connection}
+    \mathrm{Tr}[\mathcal{A}^{\mathrm{FD}}(k_j)] = \frac{-1}{\delta k} \,\mathrm{Im} \, \log \text{det} M(k_j, k_{j+1})
+\end{equation}
+where $\delta k  = k_{j+1} - k_j$ and the branch of the logarithm is chosen continuously along the path in $k$. For a single occupied band this reduces to the familiar Abelian expression, while for multiple occupied bands the determinant extracts the $U(1)$ part of the non-Abelian connection. 
+
+The discrete Wilson loop (holonomy) associated with a closed traversal of the Brillouin zone is then defined as the ordered product
+\begin{equation}
+\label{eq:wilson_loop}
+\mathcal{W} = M(k_0,k_1) M(k_1,k_2) \cdots M(k_{N-1},k_N),
+\end{equation}
+where $k_N = k_0 + G$ differs from $k_0$ by a reciprocal lattice vector. The Berry phase is obtained as,
+\begin{equation}
+\label{eq:berryphase_discretized}
+\phi_{\mathrm{FD}}= - \mathrm{Im} \, \log \text{det} \left[ \mathcal{W} \right]
+   = \sum_j \mathrm{Tr}[\mathcal{A}^{\mathrm{FD}}(k_j)] \,\delta k .
+\end{equation}
+
+Alternatively, we can evaluate the Berry phase in our smooth projection gauge $\{|\tilde u_{n k}\rangle\}$, replacing $\mathcal{A}$ by $\tilde{\mathcal{A}}$ in Eq.~\eqref{eq:berry_phase_1d}. In view of the trace, we only need the total (band-summed) Berry connection
+\begin{equation}
+\mathrm{Tr}[\tilde{\mathcal{A}}^{\mathrm{SP}}(k)]
+= \sum_n^{\mathrm{occ}} \tilde{\mathcal{A}}^{\mathrm{SP}}_{nn}(k) ,
+\end{equation}
+which can be evaluated at each $k$ point using the single-$k$ expressions derived in Sec.~\ref{sec:conn}, without finite differences in momentum space. The single-point Berry phase then becomes
+\begin{equation}
+\label{eq:riemann_sum}
+\phi_{\text{SP}} = \sum_{j} \mathrm{Tr}[\tilde{\mathcal{A}}^{\mathrm{SP}}(k_j)]\,\delta k .
+\end{equation}
+By construction, $\phi_{\text{SP}}$ converges to the correct Berry phase in the continuum limit; however, its accuracy will depend on how well the $k$-mesh resolves variations in $\tilde{\mathcal{A}}(k)$.
+
+
+\subsection{Results for tight-binding model}
+
+To illustrate these considerations, we apply both approaches to the Su--Schrieffer--Heeger (SSH) model~\cite{ssh1979}, a one-dimensional dimerized tight-binding model consisting of alternating A and B sites located at $x=-a/4$ and $a/4$ respectively ($a$ is the lattice constant). In second-quantized form, the Hamiltonian is given by
+\begin{align}
+    \label{eq:ssh_ham}
+    H = &\sum_{j} \big[v \, c^{\dagger}_{j,A} c_{j,B} + w\, c^{\dagger}_{j, B} c_{j+1, A} + \text{h.c.}\big] 
+\end{align}
+The model has inversion symmetry, which constrains the occupied-band Berry phase to be quantized to $0$ or $\pi$ (mod $2\pi$). Accordingly, the model exhibits two topologically distinct insulating phases with $\phi=0$ for $|v| > |w|$ and $\phi=\pi$ for $|v| < |w|$. The transition between phases occurs at $|v|=|w|$, where the bulk band gap closes. For $v=w$, the gap closes at the Brillouin-zone boundary $k$ = $\pi/a$, while for $v=-w$ it closes at the zone center $k=0$. We choose the parameterization $v=1$, $w=1.5$, corresponding to the phase with $\phi=\pi$ and a relatively large band gap. A simple trial orbital $|g\rangle = |A\rangle$, localized on sublattice $A$, is used to construct the projection gauge. 
+
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=3.4in]{paper/ssh_berry_conn.png}
+\end{center}
+% \centering
+\vspace{-7.5mm}
+\caption{
+Berry connection in the projection gauge as a function of crystal momentum (reduced coordinates) for $v=1$ and $w=1.5$. The solid black curve shows the single-point Berry connection. Dashed curves show the discrete connection obtained from Wilson loops at increasing mesh densities. As $N_k$ increases, the discrete connection converges to the single-point result.
+}
+\label{fig:3}
+% \vspace{-1mm}
+\end{figure}
+
+Figure \ref{fig:3} shows the Berry connection in the projection gauge as a function of crystal momentum. The solid black curve corresponds to the single-point formulation developed here, which yields the exact Berry connection at each sampled $k$-point. The dashed curves show the discrete Berry connection extracted from overlap-based Wilson loops using \eq{discrete_connection}, evaluated in the same projection gauge. As the mesh density increases, the Wilson-loop connection converges uniformly to the single-point result. 
+
+When the Berry phase is computed using overlap-based Wilson loops, convergence is rapid even on relatively coarse $k$-meshes. By contrast, evaluating the phase via numerical integration of the projection-gauge Berry connection exhibits slower convergence, particularly when the band gap is small. In this regime the Berry connection develops a narrow peak in $k$, and a coarse mesh may not adequately resolve its structure, leading to quadrature error in the discrete integral. The convergence behavior of the two approaches is summarized in Table~\ref{tab:phases}.
+
+\newcommand\Tstrut{\rule{0pt}{2.9ex}}  % "top" strut
+\newcommand\Bstrut{\rule[-1.2ex]{0pt}{0pt}} % "bottom" strut
+\begin{table}[t!]
+    \centering
+    \begin{ruledtabular}
+    \begin{tabular}{lcc}
+    $N_k$& $\phi_{\mathrm{SP}}-\pi$ & $\phi_{\mathrm{FD}}-\pi$\\
+     \hline \Tstrut
+     10  & 5$\times 10^{-2}$ & 0 \\
+     20  & 9$\times 10^{-4}$ & 0 \\
+     50  & 5$\times 10^{-9}$ & 0 \\
+     100 & 0 & 0 
+    \end{tabular}
+    \end{ruledtabular}
+    \caption{Convergence of the Berry phase for the SSH model as a function of $k$-mesh density $N_k$. The table reports deviations from the quantized value $\pi$ obtained using the single-point (SP) projection-gauge formulation and the overlap-based finite-difference (FD) Wilson-loop approach. While the Wilson-loop method yields the exact quantized phase even on coarse meshes, the single-point method converges systematically as the mesh is refined.} 
+    \label{tab:phases}
+\end{table}
+
+This difference arises from the nature of the numerical integration rather than from any deficiency of the single-point construction. The Wilson-loop formulation discretizes parallel transport at the level of the holonomy, thereby capturing the accumulated geometric phase over each mesh segment. For the Berry phase this is sufficient, since it depends only on the band-traced component of the connection and can therefore be expressed entirely in terms of the determinant of a product of overlap matrices.
+
+The single-point approach instead provides the local Berry connection itself, whose integral must be approximated using standard quadrature. While this introduces mesh-dependent integration error, it yields direct access to the full connection matrix at each $k$ point. The advantage of local access to $\tilde{\mathcal{A}}_\mu$ becomes apparent in higher-dimensional settings, as in Sec.~\ref{sec:FKM}, where quantities of interest depend explicitly on the non-Abelian structure of the Berry connection, and where no simple gauge-covariant discretization is known that can reduce the problem to a product of overlaps. 
+
+\section{Axion angle in the projection gauge}
+\label{sec:FKM}
+
+The Chern--Simons axion angle $\theta$ is a geometric property of the occupied Bloch states of a three-dimensional insulator and plays a central role in magnetoelectric response theory and in the topological classification of insulating phases. The axion angle can be expressed as a Brillouin-zone integral of the Chern--Simons 3-form constructed from the non-Abelian Berry connection. Explicitly, \cite{chern1974characteristic, Malashevich_2010, mong2010antiferromagnetic, essin2010orbital}
 \begin{equation}
 \label{eq:CS3form}
  \theta = -\frac{1}{4\pi} \int_{\text{BZ}} d^3k \,
-\epsilon^{\mu\nu\sigma} \mathrm{Tr} \left[
+\varepsilon^{\mu\nu\sigma} \mathrm{Tr} \left[
     \mathcal{A}_\mu \partial_\nu \mathcal{A}_\sigma
     - \frac{2i}{3} \mathcal{A}_\mu \mathcal{A}_\nu \mathcal{A}_\sigma
 \right],
 \end{equation}
-where $\mathcal{A}_\mu$ is the non-Abelian (multiband) Berry connection,
-\begin{equation}
-    (\mathcal{A}_\mu)_{nm} = i\langle u_{n\mathbf{k}} | \partial_{k_\mu} u_{m\mathbf{k}} \rangle .
-\end{equation}
-Here, $|u_{n\mathbf{k}}\rangle$ denotes the cell-periodic Bloch states, the indices $(n,m)$ run over the occupied bands, and $\partial_{k_\mu}$ denotes differentiation with respect to the $\mu$th Cartesian component of crystal momentum.
+where $\mathcal{A}_\mu$ is the non-Abelian Berry connection from \eq{berry_connection}. 
 
-Under a smooth gauge transformation of the occupied subspace,
-\begin{equation}
-    |\tilde{u}_{n\mathbf{k}}\rangle = U_{nm}(\mathbf{k}) |u_{m\mathbf{k}}\rangle ,
-\end{equation}
-the Berry connection transforms as
-\begin{equation}
-\label{eq:tildeA}
-    \tilde{\mathcal{A}}_\mu
-    = U^\dagger \mathcal{A}_\mu U + i U^\dagger \partial_{k_\mu} U .
-\end{equation}
-As a consequence, the Chern-Simons integral in Eq.~\ref{eq:CS3form} is invariant only modulo $2\pi$, giving $\theta$ the interpretation of an angular variable. In the presence of time-reversal or inversion symmetry, this ambiguity reduces to a quantization of $\theta$ in integer multiples of $\pi$, with odd (even) multiples corresponding to an odd (even) strong $\mathbb{Z}_2$ topological index in three dimensions \cite{essin2010orbital, qi2008topological, coh2011chern}. More generally, any cyclic adiabatic evolution of the Bloch Hamiltonian $H(\mathbf{k},\lambda)$ whose associated second Chern number in $(\mathbf{k},\lambda)$ space is nonzero will pump $\theta$ by an integer multiple of $2\pi$ \cite{essin2010orbital, taherinejad2015adiabatic}.
+Because the Chern--Simons integrand is not gauge-covariant, the integral in \eqs{CS3form}{CS3form-curv} is invariant only modulo $2\pi$, giving $\theta$ the interpretation of an angular variable. In the presence of time-reversal ($\mathcal{T}$) or inversion ($\mathcal{P}$) symmetry, this ambiguity reduces to a quantization of $\theta$ in integer multiples of $\pi$, with odd (even) multiples corresponding to an odd (even) strong $\mathbb{Z}_2$ topological index in three dimensions \cite{essin2010orbital, qi2008topological, coh2011chern}. More generally, any cyclic adiabatic evolution of the Bloch Hamiltonian $H(\mathbf{k},\lambda)$ whose associated second Chern number in $(\mathbf{k},\lambda)$ space is nonzero will pump $\theta$ by an integer multiple of $2\pi$ \cite{essin2010orbital, taherinejad2015adiabatic}.
 
-From a numerical standpoint, evaluating Eq.~\ref{eq:CS3form} requires the construction of a smooth and periodic gauge for the occupied Bloch states over the Brillouin zone. In contrast to Berry curvatures and other gauge-covariant quantities, the explicit dependence of the Chern-Simons 3-form on the Berry connection makes straightforward finite-difference approaches highly sensitive to random phases, gauge discontinuities at Brillouin-zone boundaries, and band crossings. These issues significantly complicate first-principles implementations and can lead to poor convergence unless extremely dense $k$-meshes are used.
+However, the direct numerical evaluation of $\theta$ is nontrivial. The difficulty stems from the fact that---unlike the one-dimensional Berry phase---no fully gauge-invariant discretized expression for the Chern--Simons 3-form exists in terms of products of overlap matrices, except in the single-band case \cite{coh2011chern}. As a result, the construction of a smooth, periodic gauge and the direct evaluation of $\mathcal A_\mu$ become unavoidable prerequisites for computing $\theta$. The problem of constructing a smooth, periodic gauge is closely related to that of constructing well-localized Wannier functions. Accordingly, several approaches based on Wannier and hybrid Wannier representations have been developed to compute the Chern--Simons axion angle \cite{coh2011chern, olsen2017surface, varnava2020axion}. 
 
-This situation is closely analogous to that encountered in the modern theory of electric polarization, where the polarization itself is defined only modulo a quantum. In one dimension, the electronic polarization can be written in the discretized, gauge-invariant form
-\begin{equation}
-    P = \frac{e}{2\pi} \mathrm{Im}\,\ln \det
-    \left[ M_{k_1 k_2} M_{k_2 k_3} \cdots M_{k_{M-1} k_M} \right],
-\end{equation}
-with overlap matrices $(M_{k k'})_{mn} = \langle u_{m\mathbf{k}} | u_{n\mathbf{k}'} \rangle$.
-The gauge invariance follows from the properties of the determinant. No analogous fully gauge-invariant discretized expression exists for the Chern-Simons 3-form except in the single-band case \cite{coh2011chern}, making the identification of a smooth gauge an essential prerequisite.
-
-The requirement of a smooth gauge is equally crucial when attempting to compute the Berry connection itself using finite differences. Such approaches rely on a continuous labeling of bands across the Brillouin zone and break down in the presence of band crossings or gauge discontinuities, where the notion of a ``neighboring state'' becomes ambiguous.
-
-The problem of constructing a smooth and periodic gauge is closely related to the construction of well-localized Wannier functions. Accordingly, several approaches based on Wannier and hybrid Wannier representations have been developed to compute the Chern-Simons axion angle \cite{coh2011chern, olsen2017surface, varnava2020axion}. An alternative, explicitly gauge-invariant formulation expresses changes in $\theta$ during an adiabatic evolution in terms of the four-dimensional Berry curvature (4-curvature) \cite{essin2010orbital, taherinejad2015adiabatic}.
-
-In this work, we derive an expression for $\theta$ directly in the projection gauge commonly employed in Wannierization procedures. Given an appropriate choice of trial orbitals, the projection method yields a smooth and periodic gauge by construction. We show that the corresponding non-Abelian Berry connection can be obtained analytically at each $\mathbf{k}$ point, leading to a single-point, Kubo-like expression for $\theta$ that avoids finite differences and overlaps between neighboring $\mathbf{k}$ points. The resulting formulation is both numerically robust and free from gauge-discontinuity issues.
+Here, we take a complementary approach. We combine the single-$k$ expression for the projection-gauge connection $\tilde{\mathcal{A}}_\mu(\mathbf{k}, \beta)$ derived in Sec.~\ref{sec:conn} with the Chern--Simons 3-form to compute the axion angle along an adiabatic cycle in the Fu--Kane--Mele (FKM) model. Once the projection gauge is fixed, $\tilde{\mathcal{A}}_\mu$ can be obtained directly at each $(\mathbf{k}, \beta)$ as a single-point quantity, without finite differences or overlap matrices between neighboring $k$ points. This eliminates branch-sensitive matrix logarithms and reduces sensitivity to gauge discontinuities, making it practical to evaluate the Chern-–Simons integral directly. We will compare our method against the standard finite-difference approach and against a gauge-invariant formulation for \emph{changes} in $\theta$ along a cycle based on the 4-curvature.
 
 
-An arbitrary gauge-transformation leaves Eq.~\ref{eq:CS3form} invariant only modulo $2\pi$, giving $\theta$ the interpretation of a phase angle. In the presence of time-reversal or inversion symmetry, $\theta$ is quantized to be an integer multiple of $\pi$ with an odd (even) value corresponding to an odd (even) strong $\mathbb{Z}_2$ topological index of a 3D topological insulator \cite{essin2010orbital, qi2008topological, coh2011chern}. Another interesting consequence of the $2\pi$ ambiguity is that any periodic adiabatic evolution of the Bloch Hamiltonian $H(k,\lambda)$ whose second Chern number in $(k, \lambda)$ space is nonzero will change $\theta$ by $2\pi$ \cite{essin2010orbital, taherinejad2015adiabatic}.
+\subsection{Model and adiabatic cycle}
 
-The numerical evaluation of the Chern-Simons axion angle $\theta$ requires constructing a smooth and periodic gauge for the occupied Bloch states over the Brillouin zone. Unlike Berry curvatures or other gauge-covariant quantities, the Chern-Simons 3-form depends explicitly on the non-Abelian Berry connection, making straightforward finite-difference approaches highly sensitive to gauge discontinuities, random phases, and band crossings. These difficulties have limited the robustness and efficiency of existing first-principles implementations.
+The FKM model is a tight-binding model on a diamond lattice with spin-orbit coupling that realizes a three-dimensional topological insulator with time-reversal ($\mathcal{T}$) and inversion ($\mathcal{P}$) symmetries. Each of these symmetries, in combination with the model's nontrivial topological nature, quantize the axion angle to $\theta=\pi$. 
 
-The cell-periodic wavefunctions obtained from electronic structure calculations generically do not have a special gauge choice and appear with random phases across the Brillouin zone (BZ). This enters in Eq.~\ref{eq:CS3form} through the fact that the non-Abelian connection is not gauge-covariant. A gauge change of the cell-periodic wavefunctions,
-\begin{equation}
-    |\tilde{u}_{nk}\rangle = U_{nm}(k) |u_{mk} \rangle
-\end{equation}
-changes the non-Abelian connection as 
-\begin{equation}
-\label{eq:tildeA}
-    \tilde{\mathcal{A}}_{\mu} = U^{\dagger} \mathcal{A}_\mu U + iU^\dagger \parmu U
-\end{equation} 
-All the terms produced by the gauge transformation in Eq.~\ref{eq:CS3form} cancel except a multiple of $2\pi$, leaving the ground state dynamics unchanged. 
-
-This is to be compared to the case of electric polarization, which has a similar ambiguity modulo a polarization ``quantum" that counts the number of times $U(k)$ winds around the BZ. In one dimension, the electronic polarization can be computed as,
-\begin{equation}
-    P = \frac{e}{2\pi} \text{Im} \ln \det \left[ M_{k1, k2} M_{k2, k3} \cdots M_{k_{M-1} k_M}\right]
-\end{equation}
-where the overlap matrix is defined as $(M_{kk'})_{mn} = \langle u_{mk} | u_{nk'} \rangle $.
-This form of the polarization is gauge-invariant because of the properties of the determinant. Except in the single-band case, there is not a gauge-invariant discretized formula for the integral of the Chern-Simons 3-form \cite{coh2011chern}. The calculation of the Chern-Simons 3-form requires that we first identify a smooth gauge on the k-mesh. 
-
-A smooth gauge is also needed when trying to compute $\tilde{A}_\mu$ directly from finite differences. The finite differences between neighboring states will only be meaningful in the gauge is continuous within the BZ and across BZ boundaries. The issue is even worse in the presence of band crossings, where the choice of neighboring state is ambiguous.
-
-The problem of constructing a smooth gauge is equivalent to the problem of finding well-localized Wannier functions. Thus, several approaches to compute the Chern-Simons axion angle based on Wannier and hybrid Wannier functions have been put forth \cite{coh2011chern, olsen2017surface, varnava2020axion}. An alternative gauge-invariant formulation allows one to compute the axion pumping relative to a known ground state using the 4-curvature \cite{essin2010orbital, taherinejad2015adiabatic}.
-
-In this paper, we seek to derive an expression for $\theta$ from the projection gauge commonly used in Wannierization routines. This produces a smooth and periodic gauge given a suitable choice of trial wavefunctions. Notably, we find an expression that is free of any finite difference overlaps at neighboring $k$-points, giving an exact Kubo-like expression for each $k$-point. This is both more numerically stable and free of any gauge-discontinuity issues.
-
-\section{Projection gauge}
-
-The projection method allows one to fix a smooth gauge choice by projecting the Bloch states onto a set of trial orbitals,  $|g_n\rangle$, that resemble the Bloch states in character. We define the overlap matrix between the Bloch wavefunctions and the trial orbitals,  
-\begin{equation}
-\label{eq:ovlp}
-     S_{mn}(k) = \langle \psi_{mk}|g_n\rangle,\quad m\in \rm occ .
-\end{equation}
-To obtain the closest unitary matrix to this matrix, we use the singular value decomposition, 
-\begin{equation}
-\label{eq:SVD}
-    S = W\Sigma V^\dagger
-\end{equation}
-Equivalently, this can be thought of as a polar decomposition of $S$ into a unitary part $U$ and a positive semi-definite part $P$,
+To break the symmetries that quantize $\theta$, we follow Ref.~\cite{essin2010orbital} by introducing an adiabatic parameter $\beta$ that enters the Hamiltonian through both a staggered Zeeman field and a modulation of the nearest-neighbor hopping amplitudes along the $[111]$ direction. The model Hamiltonian, written in second-quantized form, is 
 \begin{align}
-\label{eq:polar}
-    S &= UP, \\
-\label{eq:polarU}
-    U &= W V^\dagger, \\
-\label{eq:polarP}
-    P &= (S^\dagger S)^{1/2} = V \Sigma V^\dagger .
+\label{eq:FKM_H}
+H(\beta) =  \; &  \sum_{\langle ij \rangle} t_{ij}(\beta) c_i^{\dagger} c_j
++ \mathbf{h}(\beta) \cdot \left( \sum_{i \in \text{A}} c_i^\dagger \mathbf{\sigma} c_i  - \sum_{i \in \text{B}} c_i^\dagger \mathbf{\sigma} c_i \right) +\\ & \nonumber i\lambda_{\text{SO}}\sum_{\langle\langle ij \rangle\rangle} c_i^{\dagger} \boldsymbol{\sigma} \cdot (\mathbf{d}_{ij}^{1} \times \mathbf{d}_{ij}^{2}) c_j  ,
 \end{align}
-With the unitary part in hand, the Bloch-like states in the projection gauge are 
-\begin{equation}
-\label{eq:psitil}
-    |\tilde{\psi}_{nk} \rangle = \sum_{m} U_{mn}(k) | \psi_{mk} \rangle 
-\end{equation}
-In the case where the Bloch states are free of any topological obstruction, and our choice of trial wavefunctions has suitable support on the manifold of Bloch states, these rotated Bloch-like states will have a smooth gauge \cite{marzari1997, marzari2012}. 
+where $\mathbf{d}_{ij}^{1,2}$ are the two nearest-neighbor bond vectors connecting sites $i$ and $j$, $\boldsymbol{\sigma}$ denotes the vector of Pauli matrices acting on spin, and $A$ and $B$ label the two sublattices. The staggered Zeeman field breaks time-reversal symmetry and is chosen as $\mathbf{h}(\beta)= m\sin\beta\, \hat{n}$, with $\hat{n}$ pointing along the $[111]$ direction. The hopping modulation breaks inversion symmetry and is taken to be $t_{ij} = 3t+m\cos\beta$ for bonds oriented along $[111]$, and $t_{ij}=t$ otherwise. With this parameterization, the bulk energy gap remains open throughout the adiabatic cycle as $\beta$ is varied from $0$ to $2\pi$. Unless otherwise specified, all $k$-meshes are uniform and of size $ 50 \times 50 \times 50$.
 
-We note in passing that the topological obstructions encountered in the systems of interest regarding the Chern-Simons axion angle are those of a time-reversal invariant topological insulator. These obstructions can be circumvented by choosing a set of trial wavefunctions that are not Kramers pairs and break time reversal symmetry \cite{soluyanov2011}.
-
-\section{Non-Abelian connection in the projection gauge}
-
-In order to compute the Chern-Simons 3-form Eq~\ref{eq:CS3form}, we first need to obtain the non-Abelian connection in the projection gauge. The gauge rotation produces an extra factor $U^{\dagger}\parmu U$ in Eq.~\ref{eq:tildeA} that will be our primary focus. We later show that the connection in the original ``Hamiltonian" gauge of the energy eigenstates ($A_\mu$) drops out of the final equation for $\tilde{A}_\mu$.
-
-We begin by differentiating Eq.~\ref{eq:polar},
+\subsection{Gauge-invariant 4-curvature}
+\label{sec:4curv}
+As an independent benchmark of our single-point formulation, we compute the axion angle using the gauge-invariant four-curvature expression, which determines the \emph{change} in $\theta$ along an adiabatic cycle. Treating the cyclic parameter $\beta$ as an additional coordinate, the occupied bands define a vector bundle over the four-torus $(k_x,k_y,k_z,\beta)$. The axion response can be written as \cite{qi2008topological}
 \begin{equation}
-    \parmu S = (\parmu U) P + U (\parmu P)
+\label{eq:4curv}
+    \theta(\beta) -\theta(0) = \frac{1}{16 \pi} \int_0^{\beta} d\beta^\prime \int_{\text{BZ}} d^3k\, \varepsilon^{\mu\nu\rho\sigma} \text{Tr} \left[\Omega_{\mu\nu} \Omega_{\rho\sigma} \right],
 \end{equation}
-Multiplying on the right by $P^{-1}$ and on the left by $U^\dagger$, and rearranging, gives
+where $\Omega_{\mu\nu}$ is the non-Abelian Berry curvature of the occupied subspace and $(\mu,\nu,\rho,\sigma) \in \{k_x,k_y,k_z,\beta\}$. The integral over the 4-torus manifold is quantized and equals the second Chern number $C_2$ of the bundle. For the adiabatic cycle considered here, the associated second Chern number is $C_2 = 1$, implying that the axion angle is pumped by $2\pi$ over one full cycle \cite{essin2009magnetoelectric,taherinejad2015adiabatic, essin2010orbital},
 \begin{equation}
-\label{eq:udagparmu}
-    U^{\dagger} \parmu U = U^{\dagger} ( \parmu S)P^{-1}  - (\parmu P ) P^{-1}
+    \theta(2\pi) - \theta(0) = 2\pi\,.
 \end{equation}
-Thus, determining $U^{\dagger}\partial_{\mu} U$ requires closed-form expressions for $\partial_{\mu} S$ and $\partial_{\mu} P$. We further seek an expression that only depends on quantities at the same crystal momentum $k$, avoiding any finite difference approximations for derivatives of the Bloch states. 
 
-From the definition of $S$ in Eq.~\ref{eq:ovlp},
-\begin{equation}
-\label{eq:derivS}
-    (\parmu S)_{mn} = \langle \parmu \psi_{mk} | g_n \rangle, \quad m\in\text{occ}
-\end{equation} 
-Differentiating the Bloch eigenstate,
-\begin{equation}
-    |\parmu \psi_{mk} \rangle = ir_{\mu} |\psi_{mk} \rangle + e^{i k\cdot r} |\parmu u_{mk} \rangle 
-\end{equation}
-The derivative of the cell-periodic part can be obtained from first-order adiabatic perturbation theory,
-\begin{equation}
-\label{eq:first-order}
-    |\parmu u_{mk} \rangle = \sum_{l \notin occ} |u_{lk} \rangle\frac{ \langle u_{lk}| \partial_{\mu} H_k |u_{mk} \rangle}{E_{mk} - E_{lk}}  - i \sum_{n \in occ} \mathcal{A}_{mn, \mu} |u_{nk} \rangle 
-\end{equation}
-Plugging Eq.~\ref{eq:first-order} into Eq.~\ref{eq:derivS} and using Hermiticity of the non-Abelian Berry connection $\mathcal{A}_{mn, \mu} = \mathcal{A}_{mn, \mu}^{*}$ gives, 
+Since Eq.~\eqref{eq:4curv} depends only on the occupied projector defined over the four-dimensional parameter space, it is manifestly gauge invariant and requires no choice of smooth Bloch-state gauge. At $\beta=0$, inversion and time-reversal symmetry quantize the axion angle to $0$ or $\pi$, and since the system is topologically trivial at this parameter value, $\theta(0)=0$. In this case, \eq{4curv} therefore gives us $\theta(\beta)$ directly, and its computed values are shown as the dashed black curve in Fig.~\ref{fig:1}.
+
+\subsection{Chern--Simons 3-form in projection gauge}
+
+We now compute the axion angle at fixed $\beta$ using the Chern--Simons 3-form, Eq.~\ref{eq:CS3form-curv}, evaluated with the projection-gauge non-Abelian Berry connection $\tilde{\mathcal{A}}_\mu$ derived analytically in Sec.~\ref{sec:conn}, and compare it to the standard finite difference approach. This provides a direct test of both the numerical stability and internal consistency of our fixed-$k$ formulation.
+
+We build the projection gauge from two trial wavefunctions projected onto the occupied bands. In the topologically trivial phase, the trial wavefunctions take the form of a Kramers pair, with each being spin polarized and having equal weight on the tight-binding orbitals situated on the $A$ and $B$ sublattices,
 \begin{align}
- (\parmu S)_{mn} = -i \langle \psi_{mk}| r_{\mu} | g_n\rangle  + i \sum_{l \in occ} \mathcal{A}_{ml, \mu}S_{ln} +  \\ \nonumber \sum_{l \notin \rm occ} \frac{\langle u_{mk} | \parmu H_k | u_{lk} \rangle}{E_{mk} - E_{lk}}  \langle \psi_{lk} | g_n\rangle 
+    \label{eq:trial_triv}
+    |t_1\rangle &= \frac{1}{\sqrt{2}}\left(|A\uparrow\rangle - |B\uparrow\rangle \right)\\
+    |t_2 \rangle &= \frac{1}{\sqrt{2}}\left(|A\downarrow\rangle - |B\downarrow\rangle \right) .
 \end{align}
-For convenience, we define the complementary overlap matrix as the projection of the trial orbitals onto the conduction states,
+At $\beta=\pi$, the system is in a topologically nontrivial phase, and a smooth, periodic gauge respecting time-reversal symmetry does not exist. To avoid the associated obstruction \cite{soluyanov2011}, we therefore break $\mathcal{T}$ in the gauge by employing trial wavefunctions whose spin structures are no longer related to each other by $\mathcal{T}$,
+\begin{align}
+    \label{eq:trial_nontriv}
+    |t_1\rangle &= \frac{1}{\sqrt{2}}\left(|A\uparrow\rangle - |A \downarrow\rangle \right),\\
+    \label{eq:trial_nontriv2}
+    |t_2 \rangle &= \frac{1}{\sqrt{2}}\left(|B\uparrow\rangle - |B\downarrow\rangle \right).
+\end{align}
+These non-Kramers trial states are used only within a narrow window around $\beta=\pi$, indicated by the green dotted lines in Fig.~\ref{fig:1}, to avoid numerical instabilities associated with small singular values of the overlap matrix.
+
+To avoid computing $\partial_\nu \mathcal{A}_\sigma$ in \eq{CS3form} by finite differences, we eliminate it in favor of the gauge-covariant non-Abelian Berry curvature
 \begin{equation}
-\label{eq:ovlp_con}
-     S_{mn}^{\perp}(k) = \langle \psi_{mk}|g_n\rangle,\quad m\in \rm con,
-\end{equation}
-and the following matrices,
-\begin{align}
-    \mathcal{R}_{mn} &= \langle \psi_{mk}| r_{\mu} | g_n\rangle, \quad m \in \text{occ}  \\
-    \mathcal{V}_{mn} &= \frac{\langle u_{mk} | \partial_{\mu} H | u_{nk} \rangle}{E_{mk} - E_{nk}}, \quad m \in \text{occ}, \ n\notin \text{occ}
-\end{align}
-This allows us to express the derivative of the overlap matrix as a matrix equation,
+    \Omega_{\mu\nu, mn} = \partial_{\mu} \mathcal{A}_{\nu, mn} - \partial_{\nu} \mathcal{A}_{\mu,mn} - i[\mathcal{A}_\mu, \mathcal{A}_{\nu}]_{mn}
+   \end{equation}
+so that
 \begin{equation}
-\label{eq:matparmus}
-    \parmu S = -i \mathcal{R}_{\mu} + i \mathcal{A}_\mu S + \mathcal{V}_{\mu} S^{\perp}
+\label{eq:CS3form-curv}
+    \theta = -\frac{1}{4\pi} \int_{\text{BZ}} d^3 k\, \varepsilon^{\mu\nu\sigma} \text{Tr}\left[ \frac{1}{2}\mathcal{A}_{\mu}\Omega_{\nu\sigma} + \frac{i}{3} \mathcal{A}_\mu \mathcal{A}_\nu \mathcal{A}_\sigma\right].
 \end{equation}
-Each term, $\mathcal{R}_{\mu}$, $\mathcal{V}_{\mu}$, $S$, and $S^\perp$ are known for a given $k$ point. Only the $\mathcal{A}_{\mu}$ requires the use of finite differences, and as we will show below, this contribution cancels out in the final form. Below, we aim to derive a similar single-point form for $\parmu P$ to get $\tilde{\mathcal{A}}_{\mu}$ analytically.
+The advantage of this reformulation is that $\Omega$ can be computed using the Kubo formula
+\begin{align}
+\label{eq:bc-def}
+    \Omega_{\mu\nu, mn} &=\sum_{c}^{\mathrm{empty}} \frac{\langle u_{m\mathbf{k}}|\partial_{\mu} H_{\mathbf{k}}|u_{c\mathbf{k}}\rangle \langle u_{c\mathbf{k}}|\partial_{\nu} H_{\mathbf{k}}|u_{n\mathbf{k}}\rangle - (\mu \leftrightarrow \nu)}{(E_{m\mathbf{k}}-E_{c\mathbf{k}})(E_{n\mathbf{k}} -E_{c\mathbf{k}})} \\ &= (\mathcal{V}_\mu \mathcal{V}_\nu^\dagger - \mathcal{V}_\nu\mathcal{V}_\mu^\dagger)_{mn}.
+\end{align}
+In the first-principles context, this is approximated by a sum over all conduction bands included in the calculation, whereas in tight-binding it is approximated by a simple sum over a finite number of empty bands. 
 
-We now seek a closed, single–point expression for $\parmu P$. From the polar factor $P=(S^\dagger S)^{1/2}$ it follows that
+From the trial states, we construct the overlap matrices defined in \eqs{ovlp}{Sperp} and follow the procedure of Sec.~\ref{sec:conn} to obtain the projection-gauge connection $\tilde{\mathcal{A}}_\mu$. Notably, the explicit rotation into the projection gauge is never carried out; all quantities are computed directly from the overlap matrices. The resulting connection, \eq{tildeA_final}, is inserted into the Chern--Simons 3-form~\eqref{eq:CS3form-curv} to yield $\theta(\beta)$, shown as the blue curve in Fig.~\ref{fig:1}.
+
+The agreement with the gauge-invariant four-curvature result is excellent over the entire cycle. At $\beta=\pi$, symmetry enforces $\theta=\pi$, and our numerical value deviates from this by less than $10^{-6}$, with the residual error attributable to the Brillouin-zone discretization of the integral and finite numerical precision.
+
+\subsection{Comparison with finite-difference connections}
+
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=3.4in]{paper/fkm_axion_angle_comparison.png}
+\end{center}
+% \centering
+\vspace{-7.5mm}
+\caption{The axion angle $\theta(\beta)$ over one adiabatic cycle $\beta \in [0, 2\pi]$. We compute $\theta$ using three independent approaches: (i) the gauge-invariant formulation based on integrating the second Chern form (four-curvature),  shown as a dotted black line; (ii) the Chern--Simons 3-form from \eq{CS3form-curv} using the analytic single-point Berry connection of \eq{tildeA_final}, plotted in blue; and (iii) the same Chern--Simons expression evaluated using the finite difference connection of \eq{fd_connection}, shown in red. The vertical green dotted lines mark the region within which we use trial wavefunctions that do not respect $\mathcal{T}$. The nontrivial second Chern number ($C_2 = 1$) produces a net $2\pi$ shift of $\theta$ over one adiabatic cycle.}
+\label{fig:1}
+% \vspace{-1mm}
+\end{figure}
+
+For comparison, we also compute the axion angle using the standard finite-difference construction of the non-Abelian Berry connection. The procedure is as follows:
+(i) we construct the projected and orthonormalized Bloch-like states $\ket{\tilde{u}_{n\mathbf{k}}}$ from \eq{tildepsi_from_phi},
+(ii) we form overlap matrices between neighboring $k$-points,
 \begin{equation}
-\label{eq:parmuP_master}
-    P(\parmu P)+(\parmu P)P \;=\; \parmu(S^\dagger S)
-    \;=\; S^\dagger(\parmu S)+(\parmu S)^\dagger S.
+    M_\mu(\mathbf{k})_{mn} = \langle \tilde{u}_{m\mathbf{k}}|\tilde{u}_{n,\mathbf{k } + \delta k \hat{\mu}}\rangle
 \end{equation}
-After substituing \eqref{eq:matparmus},
-the anti-Hermitian term proportional to $i\mathcal{A}_\mu$ on the right-hand side of Eq.~\eqref{eq:parmuP_master} drops out, yielding
-\begin{align}
-\label{eq:parmuP_Sylvester_rhs}
-    P(\parmu P)+(\parmu P)P
-    \;=\; \mathrm{sym}\!\left\{ S^\dagger\!\left(-i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^\perp\right)\right\},
-\end{align}
-where $\mathrm{sym}\,Y \equiv Y+Y^\dagger$. This is a Sylvester equation of the form $PX + XP = Y$ for $X$.
-
-\paragraph*{Sylvester operator.}
-Define the Sylvester map $\mathcal{L}_P:\,X\mapsto PX+XP$. If this map is invertible, then we denote its inverse by $\mathcal{L}_P^{-1}$. Then the \emph{single–point} solution of Eqs.~\eqref{eq:parmuP_master}–\eqref{eq:parmuP_Sylvester_rhs} is
-\begin{align}
-\label{eq:dP_basisfree_final}
-    \parmu P
-    \;=\;
-    \mathcal{L}_P^{-1}\!\left[
-        \mathrm{sym}\!\left\{ S^\dagger\!\left(-i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^\perp\right)\right\}
-    \right].
-\end{align}
-Equation \eqref{eq:dP_basisfree_final} depends only on \emph{single–$k$} objects ($\mathcal{R}_\mu$, $\mathcal{V}_\mu$, $S^\perp$) and is therefore free of gauge–discontinuity issues.
-
-\paragraph*{Existence of the inverse.}
-From Eq.~\ref{eq:polarP}, the spectral decomposition of $P$ is given as $P=V\Sigma V^\dagger$, with $\Sigma$ being the matrix of singular values and $V$ being the right unitary from the SVD. Since $P$ is positive semi-definite, its eigenvalues (the singular values) $\Sigma=\mathrm{diag}(\sigma_1,\dots,\sigma_N)\ge 0$. The action of $\mathcal{L}_P^{-1}$ in the $\Sigma$–diagonal frame is
+where $\hat{\mu}$ is a Cartesian unit vector and $\delta k$ is the mesh spacing, (iii) we extract the unitary part of the overlap matrix via the polar decomposition\footnote{In practice, the polar decomposition is obtained from the singular value decomposition $M=V\Sigma W^\dagger$, with $\mathcal U = V W^\dagger$ and $\mathcal{P} =(M^\dagger M)^{1/2} = W\Sigma W^\dagger$.},
 \begin{equation}
-\label{eq:Linv_component_rule}
-    \mathcal{L}_P^{-1}[Y]
-    \;=\;
-    V\!\left[\frac{\,V^\dagger Y V\,}{\sigma_i+\sigma_j}\right]\!V^\dagger,
+        M_{\mu} = \mathcal{U}_{\mu}\mathcal{P}_\mu
 \end{equation}
-where the division is componentwise. The inverse mapping, and thus $\parmu P$, is uniquely defined on the support of $P$ if $\sigma_i+\sigma_j \neq 0$. Due to positive semi-definiteness, singular values with $\sigma_i + \sigma_j = 0$ must have $\sigma_i=\sigma_j=0$, which correspond to trial states with no support on the occupied subspace. This could be the consequence of poorly chosen trial wavefunctions or signal the presence of a topological obstruction to a globally smooth projection gauge.
-
-\paragraph*{Component form (used in numerics).}
-Applying \eqref{eq:Linv_component_rule} to \eqref{eq:dP_basisfree_final} gives the explicit single–point expression
-\begin{align}
-\label{eq:dP_component_final}
-    \parmu P
-    \;=\;
-    V\!\left[
-        \frac{
-            V^\dagger S^\dagger\!\left(-i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^\perp\right)\!V
-            \;+\;\text{h.c.}
-        }{\sigma_i+\sigma_j}
-    \right]\!V^\dagger,
-\end{align}
-which is the form we employ in implementations. (A derivation via diagonalizing $P$ is provided in the Appendix \ref{apdx:sylvester} for completeness.)
-
-
-Combining Eqs.~\eqref{eq:tildeA}, ~\eqref{eq:udagparmu}, and ~\eqref{eq:matparmus} gives,
-\begin{align}
-    \label{eq:tildeA_prelim}
-    \tilde{\mathcal{A}}_\mu
-    = U^\dagger \mathcal{A}_\mu U
-       +  i\left[ U^\dagger\!\left(-\,i\mathcal{R}_\mu + i\,\mathcal{A}_\mu S + \mathcal{V}_\mu S^\perp\right) -(\partial_\mu P) \right]\,P^{-1}
-\end{align}
-Since $S=UP$, we have $U^\dagger \mathcal{A}_\mu S P^{-1} = U^\dagger \mathcal{A}_\mu U$, hence the $\mathcal{A}_\mu$ terms cancel, giving
-\begin{align}
-    \tilde{\mathcal{A}}_\mu
-    &= i\,U^\dagger \left( -i\,\mathcal{R}_\mu  + \mathcal{V}_\mu S^\perp \right)P^{-1}
-       - i\,(\partial_\mu P)P^{-1}.
-    \label{eq:tildeA_after_cancel}
-\end{align}
-Using Eq.~\eqref{eq:dP_basisfree_final}, we can express $\tilde{\mathcal{A}}_\mu$ only in terms of $\mathcal{R}_\mu$ and the Kubo-like term $\mathcal{V}_\mu$,
-\begin{align}
-    \label{eq:tildeA_compact}
-    \tilde{\mathcal{A}}_\mu
-    &= i\, U^\dagger \big(-i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^\perp\big) P^{-1}
-       \;-\;
-       \\
-       \nonumber
-       &
-       i\,\mathcal{L}_P^{-1}
-       \!\left(
-           \, \mathrm{sym}\!\big\{ S^\dagger\big(-i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^\perp\big) \big\}
-       \right)
-       P^{-1}.
-\end{align}
-In explicit component form, it is
-\begin{align}
-\label{eq:tildeA_comp}
-    \tilde{\mathcal{A}}_\mu
-    &=  i\, U^\dagger \left( -i\, \mathcal{R}_\mu  +  \mathcal{V}_\mu S^\perp \right)P^{-1}
-       \nonumber\\
-    &\quad
-       -
-       i\, V\left[
-        \frac{
-            V^\dagger S^\dagger\!\left(-i\,\mathcal{R}_\mu + \,\mathcal{V}_\mu S^\perp\right)\!V
-            + \text{h.c.}
-        }{\sigma_i+\sigma_j}
-       \right]V^\dagger P^{-1}. \
-\end{align}
-
-This is the non-Abelian Berry connection in the projection gauge using only single-point quantities ($\mathcal{R}_{\mu}$, $\mathcal{V}_\mu$), obviating the need for finite-difference approximations.
-
-\section{Axion angle from Chern-Simons 3-form}
-
-We consider the Fu-Kane-Mele (FKM) model for a three-dimensional topological insulator with time-reversal ($\mathcal{T}$) and inversion ($\mathcal{P}$) symmetries that quantize the axion angle $\theta=\pi$. We introduce a parameter $\beta$ that enters the Hamiltonian through a staggered Zeeman field and hopping modulation along the $(111)$ direction. This parameter breaks the $\theta$-quantizing symmetries when its value $\beta \neq n\pi, \; n\in \mathbb{Z}$.
-
-For the calculations below, we implement the tight-binding model with the PythTB package \cite{Cole_Python_Tight_Binding_2025}, and compare the axion angle computed with the Chern-Simons 3-form implemented above with the gauge-invariant four curvature formulation implemented in PythTB.
-
-The FKM takes the second quantized form,
-
+where $\mathcal U_\mu$ is unitary and $\mathcal P_\mu$ is positive definite,
+and (iv) we evaluate the discretized non-Abelian Berry connection matrix as
 \begin{equation}
-    \label{eq:FKM}
-     H = t \sum_{\langle ij \rangle} c_i^{\dagger} c_j
-        + i\ \lambda_{SO} \sum_{\langle\langle ij \rangle\rangle} c_i^{\dagger}
-        \vec{\sigma} \cdot (\mathbf{d}_{ij}^{1} \times \mathbf{d}_{ij}^{2}) c_j
+\label{eq:fd_connection}
+    \tilde{\mathcal{A}}_\mu = \frac{i}{\delta k} \log\left[\,\mathcal{U}_\mu \right]
 \end{equation}
+where the matrix logarithm is taken with a continuous branch choice. For sufficiently small $\delta k$, this approximates the continuum connection
+of \eq{berry_connection} to $\mathcal{O}(\delta k)$. This connection is then inserted into the Chern--Simons 3-form of \eq{CS3form-curv} to evaluate $\theta(\beta)$. The resulting axion angle is shown as the red curve in Fig.~\ref{fig:1}. 
 
-where the first term is a nearest-neighbor hopping term connecting the two fcc sublattices of the diamond lattice, and the second term is a spin-orbit coupling term connecting second-neighbor sites within the same sublattice. Here, $\mathbf{d}_{ij}^{1,2}$ are the two nearest-neighbor bond vectors connecting sites $i$ and $j$. Due to inversion symmetry, each band is doubly degenerate. The degeneracy is lifted by the symmetry-lowering perturbation of the nearest-neighbor hopping along the $(111)$ direction $t \rightarrow t + \beta\ \delta t_p$. In addition to inversion, the model also has time-reversal symmetry, which will quantize $\theta$. To break time-reversal, we also include 
-a time-reversal symmetry-breaking perturbation proportional to $\beta$ that enters the Hamiltonian as a staggered Zeeman field on the $A$ and $B$ sublattices. 
+In contrast to the analytic single-point construction, the finite-difference connection exhibits enhanced sensitivity in the vicinity of the topological obstruction, as visible in Fig.~\ref{fig:1}. In this regime, the overlap matrices exhibit small singular values, and extracting the unitary part via polar decomposition becomes numerically delicate. As a result, the logarithm of $\mathcal{U}_\mu$ can fluctuate appreciably on coarse meshes, even when $\mathcal{T}$-breaking trial states are employed.
 
-Next, we will compute the axion angle using both the $3$-form derived here and the $4$-curvature as a function of the adiabatic parameter. At $\beta=\pi$, the system is in the topologically non-trivial phase and we chose trial wavefunctions that break time-reversal symmetry. Fig.\ref{fig:#1} shows the numerical computation of the axion angle, showing that both forms agree. 
+This behavior reflects the fact that the finite-difference approach discretizes the Berry connection itself through neighboring-point overlaps, thereby introducing additional discretization error prior to the evaluation of the Chern--Simons integral. By contrast, the single-point formulation provides an exact expression for the non-Abelian Berry connection at each $k$-point; the only remaining approximation arises from the Riemann-sum evaluation of the Brillouin-zone integral.
+
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=3.4in]{paper/fkm_axion_angle_convergence.png}
+\end{center}
+% \centering
+\vspace{-7.5mm}
+\caption{
+The convergence of $\theta$ toward its quantized value of $\pi$, when $\beta=\pi$, with respect to the $k$-mesh density. The horizontal axis denotes the number of $k$-points along each reciprocal lattice vector; e.g., a given $N_{k}$ corresponds to an $N_k \times N_k \times N_k$-sized $k$-mesh. The single-point formulation rapidly approaches the continuum result, whereas the finite-difference construction converges more slowly due to additional discretization error in the Berry connection itself. 
+}
+\label{fig:2}
+% \vspace{-1mm}
+\end{figure}
+
+Figure~\ref{fig:2} illustrates the convergence of $\theta(\beta=\pi)$ toward its quantized value $\pi$ as the $k$-mesh density is increased. Both methods share the same first-order quadrature error in the Brillouin-zone integration. However, the finite-difference construction introduces additional discretization error in the Berry connection itself, leading to substantially slower overall convergence. In contrast, the single-point implementation converges rapidly once the integration mesh resolves the underlying geometric structure.
+
 
 \section{Discussion}
 
-We have derived a fixed-$k$ Kubo-like expression for the Berry connection in the projection gauge and used it to compute the Chern-Simons axion angle from the Chern-Simons 3-form in the Fu-Kane-Mele model. By eliminating finite-difference derivatives in favor of a single-point Sylvester-equation solution, the method sidesteps the usual gauge-discontinuity issues and reduces the sensitivity to the choice of $k$-mesh. The numerical comparison with the gauge-invariant four-curvature formulation confirms that the single-point expression reproduces the correct axion pumping by $2\pi$ over a nontrivial adiabatic cycle.
+We have derived an exact, fixed-$k$ Kubo-like expression for the non-Abelian Berry connection in the Wannier gauge and applied it to both one- and three-dimensional test cases. By replacing finite-difference derivatives with a strictly local-$k$ formulation, the method removes errors associated with the discretized momentum derivatives and branch-sensitive matrix logarithms. In one dimension, the SSH model provides a controlled benchmark: in the fine-mesh limit, the derived $\tilde{\mathcal{A}}$ reproduces the quantized Berry phase and agrees with the standard parallel-transport construction. On coarse meshes, parallel-transport remains more robust for evaluating the Berry phase, reflecting the special role of gauge-invariant holonomy in one dimension. 
 
-While our focus here has been on the axion angle, the central object is the projection-gauge connection $\tilde{\mathcal{A}}_\mu$ itself. In practice, a large class of Berry-phase and Berry-curvature-based response formulas can be written in terms of the connection (and/or its derivatives) in any smooth gauge. Examples include orbital magnetization, anomalous Hall conductivity, optical responses, nonlinear Hall effects, Berry-curvature dipoles, and higher-order multipole responses. In Wannier-based workflows, these are typically evaluated either in a Hamiltonian gauge with explicit interband velocity matrix elements, or in a Wannier gauge with overlaps between neighboring $k$-points. The present construction offers a third route: once the projection gauge has been constructed, one can obtain $\tilde{\mathcal{A}}_\mu$ at each $k$ using only (i) matrix elements of position or velocity in the original eigenstate basis and (ii) the overlap matrix $S$ to the trial orbitals. This suggests that many response quantities could be reformulated in a numerically robust way using the same single-point machinery developed here.
+In higher dimensions, however, no analogous gauge-invariant discretization exists for geometric quantities that depend explicitly on the Berry connection itself. In this regime, construction of $\tilde{\mathcal{A}}_\mu$ in a smooth gauge is unavoidable, and the present local formulation provides a clear advantage. We demonstrated this in three dimensions by evaluating the Chern--Simons 3-form in the FKM model. Comparison with finite-difference and gauge-invariant 4-curvature approaches show that the single-$k$ formulation yields the correct axion angle over an adiabatic cycle and exhibits improved convergence with respect to mesh densities. 
 
-An immediate application is to Wannier-based post-processing codes that already rely on the projection method or on Wannier90-like workflows. In such codes, the overlap $S$ and its singular-value structure are already available as part of the disentanglement and maximally localized Wannierization. Our results show that the same ingredients can be recycled to construct $\tilde{\mathcal{A}}_\mu$ without ever forming finite differences between neighboring $k$-points. This is particularly attractive on irregular meshes, adaptive meshes, or meshes aligned to Fermi surfaces, where defining a consistent set of ``neighbors'' is awkward. It can also simplify parallelization strategies, since each $k$-point can be treated independently given access to the relevant eigenstates and trial orbitals.
+Although not yet implemented in a fully self-consistent first-principles workflow, the derivation is completely general and directly applicable in that setting. Because projection-gauge Berry connection is obtained as a strictly local object in momentum space, the method avoids reliance on neighboring-$k$ overlaps and large overlap matrices. This locality makes the approach naturally compatible with symmetry-reduced meshes, nonuniform or adaptive grids, and parallel implementations in which each $k$-point is treated independently. It also eliminates the need for maximal localization procedures that are commonly used to stabilize finite-difference derivatives in conventional Wannier workflows. While adequate $k$-point sampling remains essential for Brillouin-zone integrals, the present approach removes a distinct source of numerical instability inherent to finite-difference constructions.
 
-It is also tempting to consider generalizations to higher-order geometric objects. The present formalism provides a clean single-point expression for the connection; by differentiating once more with respect to $k$, one may hope to construct a similarly well-conditioned expression for the quantum metric and curvature tensor in the projection gauge, again without finite differences. Since the quantum metric has recently emerged as a key ingredient in flat-band superconductivity, superfluid weight, and fractional Chern insulators, such a formulation could open a path to more stable calculations of quantum-geometric response functions within Wannier-based codes, in close analogy to the axion-angle calculation presented here. We expect that exploring these generalizations, and recasting other Berry-phase-based observables in terms of the projection-gauge connection, will be a fruitful direction for future work.
+Beyond topological response coefficients, the formulation is particularly well suited to optical and nonlinear response calculations, where off-diagonal position matrix elements play a central role. Interband electric-dipole matrix elements entering optical conductivity \cite{yates2007}, shift current \cite{morimoto2016}, and higher-order nonlinear susceptibilities are directly governed by the Berry connection in a smooth gauge. In conventional Wannier-interpolation frameworks, these quantities are reconstructed using finite-difference derivatives and overlap matrices on dense $k$-meshes. An analytic single-$k$ expression for the projection-gauge connection provides a route to evaluating such matrix elements without discretized momentum derivatives, potentially improving stability in systems with small band gaps or entangled subspaces. 
+
+Moreover, because Wannier interpolation relies on real-space matrix elements of the Hamiltonian and position operator, the availability of a closed-form expression for the Berry connection may enable alternative interpolation strategies in which geometric quantities are constructed directly at each $k$ from local information, rather than through post-processed overlap matrices. Extending the present framework to fully first-principles Wannier-based implementations is therefore a natural and promising direction for future work.
+
+
+\vspace{0.6cm}
+
+\acknowledgments
+%=================================================
+This work was supported by NSF Grant DMR-2421895. We thank Andrea Urru and Daniel Seleznev for useful discussions in relation to this work.
 
 \appendix
 
-\section{Hermiticity of non-Abelian Berry connection}
-\begin{align}
-    &\langle u_{mk} | u_{nk} \rangle = 0 \rightarrow \parmu \langle u_{mk} | u_{nk} \rangle =0 \\
-    & \langle u_{mk} | \parmu u_{nk} \rangle = -\langle \parmu u_{mk} | u_{nk} \rangle = -\langle u_{nk} | \parmu u_{mk} \rangle ^*\\
-    &   A_{\mu, mn}^{\dagger} = A_{\mu,nm}^* = -i\langle u_{nk} | \parmu u_{mk} \rangle^* = i\langle u_{mk} | \parmu u_{nk} \rangle = A_{\mu, mn}
-\end{align}
-
 \section{Deriving the Sylvester equation solution}
 \label{apdx:sylvester}
-We know from the polar decomposition \eqref{eq:polarP} that $PP = S^{\dagger} S$. Differentiating this, we get
+We have a Sylvester equation for $\partial_\mu \mathcal{O}^{1/2}$ of the form,
 \begin{equation}
-\label{eq:parmuP_og}
-    P(\parmu P) + (\parmu P)P = \parmu(S^{\dagger} S)
+    \label{eq:slyv_eq_apdx}
+    \mathcal{O}^{1/2}(\partial_\mu \mathcal{O}^{1/2})+(\partial_\mu \mathcal{O}^{1/2})\mathcal{O}^{1/2}=\partial_\mu \mathcal{O}.
 \end{equation}
-This is a Sylvester equation of the form $AX + XA = B$ for $X$. We can solve this by transforming into the eigenbasis of $P$. Since $P$ is Hermitian by definition, this transformation always exists, $P = V \Sigma V^{\dagger}$ where $V$ is the right unitary and $\Sigma = \textrm{diag}(\sigma_1, \sigma_2, \cdots )$ is the matrix of singular values from the SVD in Eq.~\ref{eq:SVD}. Substituting the spectral decomposition of $P$ into Eq.~\ref{eq:parmuP_og} we get, 
+We can solve this by transforming into the eigenbasis of $\mathcal{O}^{1/2}$. Since $\mathcal{O}^{1/2}$ is Hermitian by definition, this transformation always exists, $\mathcal{O}^{1/2}= V \Sigma V^{\dagger}$ where $V$ is the unitary of eigenvectors and $\Sigma = \textrm{diag}(\sigma_1, \sigma_2, \cdots )$ is the matrix of eigenvalues. Substituting the spectral decomposition into \eq{slyv_eq_apdx} we get, 
 \begin{equation}
 \label{eq:eigdecomp}
-    (V\Sigma V^{\dagger})(\parmu P) + (\parmu P) (V \Sigma V^{\dagger} ) = S^{\dagger} \parmu S + (\parmu S^{\dagger}) S
+    (V\Sigma V^{\dagger})(\partial_\mu \mathcal{O}^{1/2}) + (\partial_\mu \mathcal{O}^{1/2}) (V \Sigma V^{\dagger} ) = \partial_\mu \mathcal{O}.
 \end{equation}
-
-Focusing on the RHS of Eq.~\ref{eq:eigdecomp}, after substituting Eq.~\ref{eq:matparmus} we have,
-\begin{equation}
-    S^{\dagger} \parmu S + (\parmu S^\dagger)S = -i S^{\dagger} \mathcal{R}_\mu + i S^\dagger \mathcal{A}_{\mu}S + S^{\dagger}\mathcal{V}_\mu S^{\perp} + \text{h.c.}
-\end{equation}
-Since $S^\dagger \mathcal{A}_{\mu}S$ is Hermitian, $iS^\dagger \mathcal{A}_{\mu}Su$ is anti-Hermitian, and the terms involving the Berry connection in the Hamiltonian gauge cancel out.
-
-Returning to Eq.~\ref{eq:eigdecomp}, we multiply $V^{\dagger}$ from the left and $V$ from the right,
+We multiply $V^{\dagger}$ from the left and $V$ from the right, obtaining,
 \begin{align}
-    &\Sigma \,(V^{\dagger}\,\partial_\mu P\,V)
-    + (V^{\dagger}\,\partial_\mu P\,V)\,\Sigma
-    \nonumber\\
-    &= 
-    -\,i\,V^{\dagger} S^{\dagger}\mathcal{R}_\mu V
-    \;+\;
-    V^{\dagger} S^{\dagger}\mathcal{V}_\mu S^{\perp} V
-    + \text{h.c.}
-    \label{eq:sylvester_raw}
+    \label{eq:sylv_step_2}
+    &\Sigma \,(V^{\dagger}\,\partial_\mu \mathcal{O}^{1/2}\,V)
+    + (V^{\dagger}\,\partial_\mu \mathcal{O}^{1/2}\,V)\,\Sigma = 
+   V^{\dagger} (\partial_\mu \mathcal{O})V.
 \end{align}
-Using the common factor $V^\dagger S^\dagger(\cdots)V$, this may be written
-\begin{align}
-    &\Sigma \,(V^{\dagger}\,\partial_\mu P\,V)
-    + (V^{\dagger}\,\partial_\mu P\,V)\,\Sigma
-    \nonumber\\
-    &= 
-    V^\dagger S^\dagger
-    \!\left(-i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^{\perp}\right)\!
-    V
-    + \text{h.c.}
-    \label{eq:sylvester_factored}
-\end{align}
-Temporarily defining
-\begin{equation}
-P_{\mu}^{\prime}
-\equiv
-V^{\dagger}(\partial_\mu P)\,V ,
-\end{equation}
-we obtain the Sylvester equation
-\begin{equation}
-\label{eq:sylvester_Pprime}
-    \Sigma\,P_{\mu}^{\prime}
-    +
-    P_{\mu}^{\prime}\,\Sigma
-    =
-    V^\dagger S^\dagger\!
-    \left(-i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^{\perp} \right)
-    V
-    + \text{h.c.}
-\end{equation}
-Since $\Sigma_{ij} = \sigma_i\delta_{ij}$, the component form is
+Since $\Sigma_{mn} = \sigma_m\delta_{mn}$, the component form is
 \begin{equation}
 \label{eq:Pprime_comp}
-    (\sigma_i+\sigma_j)
-    (P^{\prime}_{\mu})_{ij}
-    =
-    \left[
-        V^\dagger S^\dagger
-        \left( -i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^{\perp} \right)
-        V
-    \right]_{ij}
-    + \text{h.c.}
+    (\sigma_m+\sigma_n)
+    (V^{\dagger}\,\partial_\mu \mathcal{O}^{1/2}\,V)_{mn}
+    = \left( V^{\dagger} (\partial_\mu \mathcal{O})V \right)_{mn}.
 \end{equation}
-so that
+We divide by the singular values, followed by a multiplication of $V$ from the left and $V^{\dagger}$ on the right to get,
 \begin{equation}
-\label{eq:Pprime_sol}
-    (P^{\prime}_{\mu})_{ij}
+\label{eq:sylv_sol}
+    (\partial_\mu \mathcal{O}^{1/2})_{mn}
     =
+    V_{mi}
+    \left[ 
     \frac{
-        \left[
-            V^\dagger S^\dagger
-            \left( -i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^{\perp} \right)
-            V
-        \right]_{ij}
-        + \text{h.c.}
+        \left(
+           V^{\dagger} (\partial_\mu \mathcal{O})V
+        \right)_{ij}
     }{
         \sigma_i+\sigma_j
-    }.
-\end{equation}
-Transforming back to the original basis,
-\begin{equation}
-\label{eq:dP_final}
-    \partial_\mu P
-    =
-    V\,P'_\mu\,V^\dagger
-    =
-    V\,
-    \left[
-    \frac{
-        V^\dagger S^\dagger
-        \left( -i\,\mathcal{R}_\mu + \mathcal{V}_\mu S^{\perp} \right)
-        V
-        + \text{h.c.}
-    }{
-        \sigma_i+\sigma_j
-    }
-    \right]
-    V^\dagger .
+    }\right] V^{\dagger}_{jn}.
 \end{equation}
 Here, the division by $(\sigma_i+\sigma_j)$ is understood elementwise in the $\Sigma$–diagonal basis.
 
