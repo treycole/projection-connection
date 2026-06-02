@@ -1,15 +1,36 @@
 cff-version: 1.2.0
-title: "Exact Berry Connection in the Projection Gauge"
-message: "If you use this code, please cite the associated paper."
+message: "If you use this software, please cite the associated paper."
+title: "projection-connection"
 type: software
 authors:
-  - family-names: Cole
-    given-names: Trey
-    affiliation: Rutgers University
-  - family-names: Vanderbilt
-    given-names: David
-    affiliation: Rutgers University
-repository-code: https://github.com/treycole/projection-connection
-license: MIT
-version: 1.0.0
-date-released: 2026-02-21
+  - family-names: "Cole"
+    given-names: "Trey"
+    orcid: "https://orcid.org/0000-0002-6810-4186"
+    affiliation: "Rutgers University"
+  - family-names: "Vanderbilt"
+    given-names: "David"
+    orcid: "https://orcid.org/0000-0002-2465-9091"
+    affiliation: "Rutgers University"
+repository-code: "https://github.com/treycole/projection-connection"
+license: "MIT"
+
+preferred-citation:
+  type: article
+  title: "Exact expression for the Berry connection in the projection gauge"
+  authors:
+    - family-names: "Cole"
+      given-names: "Trey"
+      orcid: "https://orcid.org/0000-0002-6810-4186"
+      affiliation: "Department of Physics & Astronomy, Rutgers University, Piscataway, New Jersey 08854, USA"
+    - family-names: "Vanderbilt"
+      given-names: "David"
+      orcid: "https://orcid.org/0000-0002-2465-9091"
+      affiliation: "Department of Physics & Astronomy, Rutgers University, Piscataway, New Jersey 08854, USA"
+  journal: "Physical Review B"
+  volume: 113
+  issue: 24
+  pages: 245106
+  year: 2026
+  month: 6
+  doi: "10.1103/jh1y-x9nz"
+  url: "https://link.aps.org/doi/10.1103/jh1y-x9nz"
