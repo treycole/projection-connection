@@ -107,7 +107,7 @@ Department of Physics \& Astronomy, Rutgers University,
 Piscataway, New Jersey 08854, USA}
 
 \begin{abstract}
-The Berry connection encodes the momentum-space geometry of occupied Bloch states in gapped insulators and plays a central role in topological materials. While gauge-invariant quantities can be evaluated from overlap matrices between neighboring $k$ points, accessing the Berry connection itself as a smooth field requires specifying a continuous gauge over the Brillouin zone. Wannier-based workflows achieve this through projection onto localized orbitals, enabling stable evaluation of geometric quantities and response functions. In this setting, the Berry connection enters directly in Wannier-interpolated calculations of polarization, Berry curvature, and related response functions. In practical implementations, however, the projection-gauge Berry connection is typically constructed from finite-difference overlaps between neighboring $k$ points, discretizing momentum derivatives and introducing errors tied to $k$-mesh spacing and gauge alignment. These effects can become numerically delicate in systems with small band gaps or when evaluating higher-order responses such as the Chern–Simons axion angle. Here, we derive an exact expression for the non-Abelian Berry connection in the projection gauge that is local in crystal momentum. Starting from projected and orthonormalized Bloch-like states, we obtain a closed-form equation expressed entirely in terms of $k$-local quantities. We validate the formulation in one and three dimensions by computing the Berry phase and Chern–Simons axion angle in tight-binding models. The resulting framework provides a stable route to evaluating geometric properties within Wannier interpolation schemes and future first-principles implementations.
+The Berry connection encodes the momentum-space geometry of occupied Bloch states in gapped insulators and plays a central role in topological materials. While gauge-invariant quantities can be evaluated from overlap matrices between neighboring $k$ points, accessing the Berry connection itself as a smooth field requires specifying a continuous gauge over the Brillouin zone. Wannier-based workflows achieve this through projection onto localized orbitals, enabling stable evaluation of geometric quantities and response functions. In this setting, the Berry connection enters directly in Wannier-interpolated calculations of polarization, Berry curvature, and related response functions. In practical implementations, however, the projection-gauge Berry connection is typically constructed from finite-difference overlaps between neighboring $k$ points, discretizing momentum derivatives and introducing errors tied to $k$-mesh spacing and gauge alignment. These effects can become numerically delicate in systems with small band gaps or when evaluating higher-order responses such as the Chern-Simons axion angle. Here, we derive an exact expression for the non-Abelian Berry connection in the projection gauge that is local in crystal momentum. Starting from projected and orthonormalized Bloch-like states, we obtain a closed-form equation expressed entirely in terms of $k$-local quantities. We validate the formulation in one and three dimensions by computing the Berry phase and Chern–Simons axion angle in tight-binding models. The resulting framework provides a stable route to evaluating geometric properties within Wannier interpolation schemes and future first-principles implementations.
 \end{abstract}
 
 \maketitle
@@ -469,7 +469,7 @@ M_{mn}(k_j,k_{j+1}) = \langle u_{m k_j} | u_{n k_{j+1}} \rangle .
 which describes the parallel transport of the occupied subspace between neighboring $k$-points in momentum space. From these overlaps, one may define a discrete (band-traced) Berry connection associated with the link $(k_j, k_{j+1})$ as 
 \begin{equation}
     \label{eq:discrete_connection}
-    \mathrm{Tr}[\mathcal{A}^{\mathrm{FD}}(k_j)] = \frac{-1}{\delta k} \,\mathrm{Im} \, \log \text{det} M(k_j, k_{j+1})
+    \mathrm{Tr}[\mathcal{A}^{\mathrm{FD}}(k_j)] = \frac{-1}{\delta k} \,\mathrm{Im} \, \ln \text{det} M(k_j, k_{j+1})
 \end{equation}
 where $\delta k  = k_{j+1} - k_j$ and the branch of the logarithm is chosen continuously along the path in $k$. For a single occupied band, this reduces to the familiar Abelian expression, while for multiple occupied bands, the determinant extracts the $U(1)$ part of the non-Abelian connection. 
 
@@ -481,7 +481,7 @@ The discrete Wilson loop (holonomy) associated with a closed traversal of the Br
 where $k_N = k_0 + G$ differs from $k_0$ by a reciprocal lattice vector. The Berry phase is obtained as,
 \begin{equation}
 \label{eq:berryphase_discretized}
-\phi_{\mathrm{FD}}= - \mathrm{Im} \, \log \text{det} \left[ \mathcal{W} \right]
+\phi_{\mathrm{FD}}= - \mathrm{Im} \, \ln \text{det} \left[ \mathcal{W} \right]
    = \sum_j \mathrm{Tr}[\mathcal{A}^{\mathrm{FD}}(k_j)] \,\delta k .
 \end{equation}
 
@@ -661,7 +661,7 @@ where $\mathcal U_\mu$ is unitary and $\mathcal P_\mu$ is positive definite,
 and (iv) we evaluate the discretized non-Abelian Berry connection matrix as
 \begin{equation}
 \label{eq:fd_connection}
-    \tilde{\mathcal{A}}_\mu = \frac{i}{\delta k} \log\left[\,\mathcal{U}_\mu \right]
+    \tilde{\mathcal{A}}_\mu = \frac{i}{\delta k} \ln\left[\,\mathcal{U}_\mu \right]
 \end{equation}
 where the matrix logarithm is taken with a continuous branch choice. For sufficiently small $\delta k$, this approximates the continuum connection of \eq{berry_connection} to $\mathcal{O}(\delta k)$. This connection is then inserted into the Chern--Simons 3-form of \eq{CS3form-curv} to evaluate $\theta(\beta)$. The resulting axion angle is shown as the red curve in Fig.~\ref{fig:1}. 
 
