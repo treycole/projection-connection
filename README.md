@@ -1,6 +1,6 @@
 # Exact expression for the Berry connection in the projection gauge 
 
-[![Journal](https://img.shields.io/badge/PhysRevB-10.1103/PhysRevB.113.245106-blue)](https://doi.org/10.1103/jh1y-x9nz) [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.18727385.svg)](https://doi.org/10.5281/zenodo.18727385) 
+[![Journal](https://img.shields.io/badge/PhysRevB-10.1103/PhysRevB.113.245106-blue)](https://doi.org/10.1103/jh1y-x9nz) [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.18727384.svg)](https://doi.org/10.5281/zenodo.18727384) 
 
 Code accompanying the paper **"Exact expression for the Berry connection in the projection gauge"** by Trey Cole and David Vanderbilt. 
 
